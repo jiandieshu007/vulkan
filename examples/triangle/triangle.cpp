@@ -15,11 +15,53 @@ public:
         glm::mat4 modelview;
     }uniforms;
     vks::Buffer UniformBuffer;
-    
+
+    vkglTF::Model Scene;
+
     vks::Buffer VertexBuffer, IndexBuffer;
     uint32_t index{ 0 };
 
     vks::Texture2D texture;
+
+    
+
+    struct
+    {
+        VkPipeline scene;
+        VkPipeline display;
+    }pipelines;
+
+    struct
+    {
+        VkPipelineLayout scene;
+        VkPipelineLayout display;
+    }pipelineLayouts;
+
+    struct 
+    {
+        VkDescriptorSet scenes;
+        VkDescriptorSet display;
+    }descriptorSets;
+
+    struct 
+    {
+        VkDescriptorSetLayout scene;
+        VkDescriptorSetLayout display;
+    }descriptorSetLayouts;
+
+    // G-Buffer framebuffer attachments
+    struct FrameBufferAttachment {
+        VkImage image = VK_NULL_HANDLE;
+        VkDeviceMemory mem = VK_NULL_HANDLE;
+        VkImageView view = VK_NULL_HANDLE;
+        VkFormat format;
+    };
+    struct Attachments {
+        FrameBufferAttachment position, normal, albedo;
+        int32_t width;
+        int32_t height;
+    } attachments;
+
 
     VkPipeline pipeline{ VK_NULL_HANDLE };
     VkPipelineLayout pipelineLayout{ VK_NULL_HANDLE };
@@ -50,6 +92,176 @@ public:
             vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
             vkDestroyPipeline(device, pipeline, nullptr);
         }
+    }
+    void clearAttachment(FrameBufferAttachment* attachment)
+    {
+        vkDestroyImageView(device, attachment->view, nullptr);
+        vkDestroyImage(device, attachment->image, nullptr);
+        vkFreeMemory(device, attachment->mem, nullptr);
+    }
+
+    // Create a frame buffer attachment
+    void createAttachment(VkFormat format, VkImageUsageFlags usage, FrameBufferAttachment* attachment)
+    {
+        if (attachment->image != VK_NULL_HANDLE) {
+            clearAttachment(attachment);
+        }
+
+        VkImageAspectFlags aspectMask = 0;
+
+        attachment->format = format;
+
+        if (usage & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
+        {
+            aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        }
+        if (usage & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
+        {
+            aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+        }
+
+        assert(aspectMask > 0);
+
+        VkImageCreateInfo image = vks::initializers::imageCreateInfo();
+        image.imageType = VK_IMAGE_TYPE_2D;
+        image.format = format;
+        image.extent.width = attachments.width;
+        image.extent.height = attachments.height;
+        image.extent.depth = 1;
+        image.mipLevels = 1;
+        image.arrayLayers = 1;
+        image.samples = VK_SAMPLE_COUNT_1_BIT;
+        image.tiling = VK_IMAGE_TILING_OPTIMAL;
+        // VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT flag is required for input attachments
+        image.usage = usage | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
+        image.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+        VkMemoryAllocateInfo memAlloc = vks::initializers::memoryAllocateInfo();
+        VkMemoryRequirements memReqs;
+
+        VK_CHECK_RESULT(vkCreateImage(device, &image, nullptr, &attachment->image));
+        vkGetImageMemoryRequirements(device, attachment->image, &memReqs);
+        memAlloc.allocationSize = memReqs.size;
+        memAlloc.memoryTypeIndex = vulkanDevice->getMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        VK_CHECK_RESULT(vkAllocateMemory(device, &memAlloc, nullptr, &attachment->mem));
+        VK_CHECK_RESULT(vkBindImageMemory(device, attachment->image, attachment->mem, 0));
+
+        VkImageViewCreateInfo imageView = vks::initializers::imageViewCreateInfo();
+        imageView.viewType = VK_IMAGE_VIEW_TYPE_2D;
+        imageView.format = format;
+        imageView.subresourceRange = {};
+        imageView.subresourceRange.aspectMask = aspectMask;
+        imageView.subresourceRange.baseMipLevel = 0;
+        imageView.subresourceRange.levelCount = 1;
+        imageView.subresourceRange.baseArrayLayer = 0;
+        imageView.subresourceRange.layerCount = 1;
+        imageView.image = attachment->image;
+        VK_CHECK_RESULT(vkCreateImageView(device, &imageView, nullptr, &attachment->view));
+    }
+
+    void CreateGbufferAttachment()
+    {
+        createAttachment(VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &attachments.position);	// (World space) Positions
+        createAttachment(VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &attachments.normal);		// (World space) Normals
+        createAttachment(VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &attachments.albedo);			// Albedo (color)
+    }
+    void setupRenderPass() override
+    {
+        attachments.width = width;
+        attachments.height = height;
+
+        CreateGbufferAttachment();
+
+        std::array<VkAttachmentDescription, 5> attachments{};
+
+        // Color attachment
+        attachments[0].format = swapChain.colorFormat;
+        attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
+        attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+        attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        attachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        attachments[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+        // Deferred attachments
+        // Position
+        attachments[1].format = this->attachments.position.format;
+        attachments[1].samples = VK_SAMPLE_COUNT_1_BIT;
+        attachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        attachments[1].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        attachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        attachments[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        attachments[1].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        // Normals
+        attachments[2].format = this->attachments.normal.format;
+        attachments[2].samples = VK_SAMPLE_COUNT_1_BIT;
+        attachments[2].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        attachments[2].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        attachments[2].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        attachments[2].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        attachments[2].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        attachments[2].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        // Albedo
+        attachments[3].format = this->attachments.albedo.format;
+        attachments[3].samples = VK_SAMPLE_COUNT_1_BIT;
+        attachments[3].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        attachments[3].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        attachments[3].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        attachments[3].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        attachments[3].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        attachments[3].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        // Depth attachment
+        attachments[4].format = depthFormat;
+        attachments[4].samples = VK_SAMPLE_COUNT_1_BIT;
+        attachments[4].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        attachments[4].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        attachments[4].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        attachments[4].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        attachments[4].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        attachments[4].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+        std::array<VkSubpassDescription, 2> subpassDescriptions{};
+
+        // first subpass
+
+        VkAttachmentReference colorRefrences[3];
+
+        colorRefrences[0] = { 1,VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
+        colorRefrences[1] = { 2,VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
+        colorRefrences[2] = { 3,VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
+
+        VkAttachmentReference depthRefrence{ 4,VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
+
+        subpassDescriptions[0].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+        subpassDescriptions[0].colorAttachmentCount = 3;
+        subpassDescriptions[0].pColorAttachments = colorRefrences;
+        subpassDescriptions[0].pDepthStencilAttachment = &depthRefrence;
+
+        //second subpass
+        VkAttachmentReference colorRefrence{ 0,VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
+
+        VkAttachmentReference inputRefrences[3];
+
+        inputRefrences[0] = { 1,VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
+        inputRefrences[1] = { 2,VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
+        inputRefrences[2] = { 3,VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
+
+        subpassDescriptions[1].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+        subpassDescriptions[1].colorAttachmentCount = 1;
+        subpassDescriptions[1].pColorAttachments = &colorRefrence;
+        subpassDescriptions[1].pDepthStencilAttachment = &depthRefrence;
+        subpassDescriptions[1].inputAttachmentCount = 3;
+        subpassDescriptions[1].pInputAttachments = inputRefrences;
+
+
+    }
+    void LoadAsset()
+    {
+        const uint32_t glTFLoadingFlags = vkglTF::FileLoadingFlags::PreTransformVertices | vkglTF::FileLoadingFlags::PreMultiplyVertexColors | vkglTF::FileLoadingFlags::FlipY;
+        Scene.loadFromFile(getAssetPath() + "models/chinesedragon.gltf", vulkanDevice, queue, glTFLoadingFlags);
+
     }
     void createModel() {
 
