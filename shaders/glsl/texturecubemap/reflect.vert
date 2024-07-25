@@ -27,3 +27,4 @@ void main()
 	outLightVec = lightPos.xyz - outPos.xyz;
 	outViewVec = -outPos.xyz;
 }
+

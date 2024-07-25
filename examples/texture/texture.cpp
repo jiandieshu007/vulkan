@@ -183,7 +183,7 @@ public:
 
 			// Copy texture data into host local staging buffer
 			uint8_t *data;
-			VK_CHECK_RESULT(vkMapMemory(device, stagingMemory, 0, memReqs.size, 0, (void **)&data));
+			VK_CHECK_RESULT(vkMapMemory(device, stagingMemory, 0, ktxTextureSize, 0, (void **)&data));
 			memcpy(data, ktxTextureData, ktxTextureSize);
 			vkUnmapMemory(device, stagingMemory);
 
@@ -680,4 +680,23 @@ public:
 	}
 };
 
-VULKAN_EXAMPLE_MAIN()
+VulkanExample* vulkanExample; 
+LRESULT __stdcall WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+	if (vulkanExample != 0) {
+		vulkanExample->handleMessages(hWnd, uMsg, wParam, lParam);
+	} 
+	return (DefWindowProcA(hWnd, uMsg, wParam, lParam));
+} 
+
+int __stdcall WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
+	for (int32_t i = 0; i < (*__p___argc()); i++) {
+		VulkanExample::args.push_back((*__p___argv())[i]);
+	}; 
+	vulkanExample = new VulkanExample(); 
+	vulkanExample->initVulkan(); 
+	vulkanExample->setupWindow(hInstance, WndProc);
+	vulkanExample->prepare(); 
+	vulkanExample->renderLoop(); 
+	delete(vulkanExample); 
+	return 0;
+}

@@ -97,44 +97,44 @@ Synchronization in the master branch currently isn't optimal und uses ```vkDevic
 
 ### Basics
 
-#### [First triangle](examples/triangle/)
-Basic and verbose example for getting a colored triangle rendered to the screen using Vulkan. This is meant as a starting point for learning Vulkan from the ground up. A huge part of the code is boilerplate that is abstracted away in later examples.
+#### [First triangle](examples/triangle/) 
+99 Basic and verbose example for getting a colored triangle rendered to the screen using Vulkan. This is meant as a starting point for learning Vulkan from the ground up. A huge part of the code is boilerplate that is abstracted away in later examples.
 
 #### [Pipelines](examples/pipelines/)
 
-Using pipeline state objects (pso) that bake state information (rasterization states, culling modes, etc.) along with the shaders into a single object, making it easy for an implementation to optimize usage (compared to OpenGL's dynamic state machine). Also demonstrates the use of pipeline derivatives.
+99 Using pipeline state objects (pso) that bake state information (rasterization states, culling modes, etc.) along with the shaders into a single object, making it easy for an implementation to optimize usage (compared to OpenGL's dynamic state machine). Also demonstrates the use of pipeline derivatives.
 
 #### [Descriptor sets](examples/descriptorsets)
 
-Descriptors are used to pass data to shader binding points. Sets up descriptor sets, layouts, pools, creates a single pipeline based on the set layout and renders multiple objects with different descriptor sets.
+99 Descriptors are used to pass data to shader binding points. Sets up descriptor sets, layouts, pools, creates a single pipeline based on the set layout and renders multiple objects with different descriptor sets.
 
 #### [Dynamic uniform buffers](examples/dynamicuniformbuffer/)
 
-Dynamic uniform buffers are used for rendering multiple objects with multiple matrices stored in a single uniform buffer object. Individual matrices are dynamically addressed upon descriptor binding time, minimizing the number of required descriptor sets.
+99 Dynamic uniform buffers are used for rendering multiple objects with multiple matrices stored in a single uniform buffer object. Individual matrices are dynamically addressed upon descriptor binding time, minimizing the number of required descriptor sets.
 
 #### [Push constants](examples/pushconstants/)
 
-Uses push constants, small blocks of uniform data stored within a command buffer, to pass data to a shader without the need for uniform buffers.
+99 Uses push constants, small blocks of uniform data stored within a command buffer, to pass data to a shader without the need for uniform buffers.
 
 #### [Specialization constants](examples/specializationconstants/)
 
-Uses SPIR-V specialization constants to create multiple pipelines with different lighting paths from a single "uber" shader.
+99 Uses SPIR-V specialization constants to create multiple pipelines with different lighting paths from a single "uber" shader.
 
 #### [Texture mapping](examples/texture/)
 
-Loads a 2D texture from disk (including all mip levels), uses staging to upload it into video memory and samples from it using combined image samplers.
+99 Loads a 2D texture from disk (including all mip levels), uses staging to upload it into video memory and samples from it using combined image samplers.
 
 #### [Texture arrays](examples/texturearray/)
 
-Loads a 2D texture array containing multiple 2D texture slices (each with its own mip chain) and renders multiple meshes each sampling from a different layer of the texture. 2D texture arrays don't do any interpolation between the slices.
+99 Loads a 2D texture array containing multiple 2D texture slices (each with its own mip chain) and renders multiple meshes each sampling from a different layer of the texture. 2D texture arrays don't do any interpolation between the slices.
 
 #### [Cube map textures](examples/texturecubemap/)
 
-Loads a cube map texture from disk containing six different faces. All faces and mip levels are uploaded into video memory, and the cubemap is displayed on a skybox as a backdrop and on a 3D model as a reflection.
+99 Loads a cube map texture from disk containing six different faces. All faces and mip levels are uploaded into video memory, and the cubemap is displayed on a skybox as a backdrop and on a 3D model as a reflection.
 
 #### [Cube map arrays](examples/texturecubemaparray/)
 
-Loads an array of cube map textures from a single file. All cube maps are uploaded into video memory with their faces and mip levels, and the selected cubemap is displayed on a skybox as a backdrop and on a 3D model as a reflection.
+99 Loads an array of cube map textures from a single file. All cube maps are uploaded into video memory with their faces and mip levels, and the selected cubemap is displayed on a skybox as a backdrop and on a 3D model as a reflection.
 
 #### [3D textures](examples/texture3d/)
 
@@ -142,7 +142,7 @@ Generates a 3D texture on the cpu (using perlin noise), uploads it to the device
 
 #### [Input attachments](examples/inputattachments)
 
-Uses input attachments to read framebuffer contents from a previous sub pass at the same pixel position within a single render pass. This can be used for basic post processing or image composition ([blog entry](https://www.saschawillems.de/tutorials/vulkan/input_attachments_subpasses)).
+99 Uses input attachments to read framebuffer contents from a previous sub pass at the same pixel position within a single render pass. This can be used for basic post processing or image composition ([blog entry](https://www.saschawillems.de/tutorials/vulkan/input_attachments_subpasses)).
 
 #### [Sub passes](examples/subpasses/)
 
@@ -377,7 +377,7 @@ Only uses compute shader capabilities for running calculations on an input data 
 
 #### [Text rendering](examples/textoverlay/)
 
-Load and render a 2D text overlay created from the bitmap glyph data of a [stb font file](https://nothings.org/stb/font/). This data is uploaded as a texture and used for displaying text on top of a 3D scene in a second pass.
+99  Load and render a 2D text overlay created from the bitmap glyph data of a [stb font file](https://nothings.org/stb/font/). This data is uploaded as a texture and used for displaying text on top of a 3D scene in a second pass.
 
 #### [Distance field fonts](examples/distancefieldfonts/)
 

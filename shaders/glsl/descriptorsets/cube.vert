@@ -11,6 +11,10 @@ layout (set = 0, binding = 0) uniform UBOMatrices {
 	mat4 model;
 } uboMatrices;
 
+layout (set = 0, binding = 2) uniform UBOMatrice {
+	mat4 Slate;
+} uboS;
+
 layout (location = 0) out vec3 outNormal;
 layout (location = 1) out vec3 outColor;
 layout (location = 2) out vec2 outUV;
@@ -24,5 +28,5 @@ void main()
 	outNormal = inNormal;
 	outColor = inColor;
 	outUV = inUV;
-	gl_Position = uboMatrices.projection * uboMatrices.view * uboMatrices.model * vec4(inPos.xyz, 1.0);
+	gl_Position =  uboS.Slate * uboMatrices.projection * uboMatrices.view * uboMatrices.model * vec4(inPos.xyz, 1.0);
 }

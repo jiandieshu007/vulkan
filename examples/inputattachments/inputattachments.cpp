@@ -299,6 +299,7 @@ public:
 		subpassDescriptions[1].inputAttachmentCount = 2;
 		subpassDescriptions[1].pInputAttachments = inputReferences;
 
+
 		/*
 			Subpass dependencies for layout transitions
 		*/
@@ -314,7 +315,7 @@ public:
 
 		// This dependency transitions the input attachment from color attachment to shader read
 		dependencies[1].srcSubpass = 0;
-		dependencies[1].dstSubpass = 1;
+		dependencies[1].dstSubpass = 1;  
 		dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 		dependencies[1].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 		dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;

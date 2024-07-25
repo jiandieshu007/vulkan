@@ -6,6 +6,8 @@ layout (binding = 0) uniform UBO
 {
 	mat4 projection;
 	mat4 model;
+	mat4 invModel;
+	float lodBias;
 } ubo;
 
 layout (location = 0) out vec3 outUVW;

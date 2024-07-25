@@ -153,6 +153,7 @@ public:
 			{
 				// One dynamic offset per dynamic descriptor to offset into the ubo containing all model matrices
 				uint32_t dynamicOffset = j * static_cast<uint32_t>(dynamicAlignment);
+
 				// Bind the descriptor set for rendering a mesh using the dynamic offset
 				vkCmdBindDescriptorSets(drawCmdBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 1, &dynamicOffset);
 

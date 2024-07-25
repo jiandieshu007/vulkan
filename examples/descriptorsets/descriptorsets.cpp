@@ -30,6 +30,10 @@ public:
 	};
 	std::array<Cube, 2> cubes;
 
+	glm::mat4 Slate;
+	vks::Buffer SlateUniform;
+	VkDescriptorSet DSlate;
+
 	vkglTF::Model model;
 
 	VkPipeline pipeline;
@@ -144,7 +148,7 @@ public:
 
 		*/
 
-		std::array<VkDescriptorSetLayoutBinding,2> setLayoutBindings{};
+		std::array<VkDescriptorSetLayoutBinding,3> setLayoutBindings{};
 
 		/*
 			Binding 0: Uniform buffers (used to pass matrices)
@@ -165,6 +169,14 @@ public:
 		// Accessible from the fragment shader only
 		setLayoutBindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 		setLayoutBindings[1].descriptorCount = 1;
+
+		/*
+			Binding 2:
+		*/
+		setLayoutBindings[2].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		setLayoutBindings[2].binding = 2;
+		setLayoutBindings[2].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+		setLayoutBindings[2].descriptorCount = 1;
 
 		// Create the descriptor set layout
 		VkDescriptorSetLayoutCreateInfo descriptorLayoutCI{};
@@ -190,13 +202,14 @@ public:
 
 		std::array<VkDescriptorPoolSize, 2> descriptorPoolSizes{};
 
-		// Uniform buffers : 1 per object
+		// Uniform buffers : 2 per object
 		descriptorPoolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		descriptorPoolSizes[0].descriptorCount = static_cast<uint32_t>(cubes.size());
+		descriptorPoolSizes[0].descriptorCount = static_cast<uint32_t>(cubes.size())+2 ;
 
 		// Combined image samples : 1 per object texture
 		descriptorPoolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		descriptorPoolSizes[1].descriptorCount = static_cast<uint32_t>(cubes.size());
+
 
 		// Create the global descriptor pool
 		VkDescriptorPoolCreateInfo descriptorPoolCI = {};
@@ -218,6 +231,9 @@ public:
 
 		*/
 
+
+
+
 		for (auto &cube: cubes) {
 
 			// Allocates an empty descriptor set without actual descriptors from the pool using the set layout
@@ -230,7 +246,7 @@ public:
 
 			// Update the descriptor set with the actual descriptors matching shader bindings set in the layout
 
-			std::array<VkWriteDescriptorSet, 2> writeDescriptorSets{};
+			std::array<VkWriteDescriptorSet, 3> writeDescriptorSets{};
 
 			/*
 				Binding 0: Object matrices Uniform buffer
@@ -241,6 +257,16 @@ public:
 			writeDescriptorSets[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 			writeDescriptorSets[0].pBufferInfo = &cube.uniformBuffer.descriptor;
 			writeDescriptorSets[0].descriptorCount = 1;
+
+			/*
+				Binding 2: Object matrices Uniform buffer
+			*/
+			writeDescriptorSets[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			writeDescriptorSets[2].dstSet = cube.descriptorSet;
+			writeDescriptorSets[2].dstBinding = 2;
+			writeDescriptorSets[2].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			writeDescriptorSets[2].pBufferInfo = &SlateUniform.descriptor;
+			writeDescriptorSets[2].descriptorCount = 1;
 
 			/*
 				Binding 1: Object texture
@@ -315,10 +341,20 @@ public:
 				sizeof(Cube::Matrices)));
 			VK_CHECK_RESULT(cube.uniformBuffer.map());
 		}
+		vulkanDevice->createBuffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			&SlateUniform, sizeof(glm::mat4));
+		Slate = glm::mat4(1.0f);
+		//Slate[0][0] = 0.5;
+		//Slate[1][1] = 0.5;
+		//Slate[2][2] = 0.5;
+		SlateUniform.map();
+
+		memcpy(SlateUniform.mapped, &Slate, sizeof(glm::mat4));
 
 		updateUniformBuffers();
 	}
 
+	// buffer map to a  pointer , then map the data to the pointer.
 	void updateUniformBuffers()
 	{
 		cubes[0].matrices.model = glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 0.0f, 0.0f));
@@ -381,4 +417,12 @@ public:
 	}
 };
 
-VULKAN_EXAMPLE_MAIN()
+VulkanExample* vulkanExample; LRESULT __stdcall WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+	if (vulkanExample != 0) {
+		vulkanExample->handleMessages(hWnd, uMsg, wParam, lParam);
+	} return (DefWindowProcA(hWnd, uMsg, wParam, lParam));
+} int __stdcall WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
+	for (int32_t i = 0; i < (*__p___argc()); i++) {
+		VulkanExample::args.push_back((*__p___argv())[i]);
+	}; vulkanExample = new VulkanExample(); vulkanExample->initVulkan(); vulkanExample->setupWindow(hInstance, WndProc); vulkanExample->prepare(); vulkanExample->renderLoop(); delete(vulkanExample); return 0;
+}

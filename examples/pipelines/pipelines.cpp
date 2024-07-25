@@ -102,7 +102,7 @@ public:
 			VkViewport viewport = vks::initializers::viewport((float)width, (float)height, 0.0f, 1.0f);
 			vkCmdSetViewport(drawCmdBuffers[i], 0, 1, &viewport);
 
-			VkRect2D scissor = vks::initializers::rect2D(width, height,	0, 0);
+			VkRect2D scissor = vks::initializers::rect2D(width/3, height, 0, 0);
 			vkCmdSetScissor(drawCmdBuffers[i], 0, 1, &scissor);
 
 			vkCmdBindDescriptorSets(drawCmdBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, NULL);
@@ -116,6 +116,8 @@ public:
 			scene.draw(drawCmdBuffers[i]);
 
 			// Center : Render the scene using a toon style pipeline
+			scissor.offset.x = width / 3;
+			vkCmdSetScissor(drawCmdBuffers[i], 0, 1, &scissor);
 			viewport.x = (float)width / 3.0f;
 			vkCmdSetViewport(drawCmdBuffers[i], 0, 1, &viewport);
 			vkCmdBindPipeline(drawCmdBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.toon);
@@ -127,6 +129,8 @@ public:
 
 			// Right : Render the scene as wireframe (if that feature is supported by the implementation)
 			if (enabledFeatures.fillModeNonSolid) {
+				scissor.offset.x *= 2;
+				vkCmdSetScissor(drawCmdBuffers[i], 0, 1, &scissor);
 				viewport.x = (float)width / 3.0f + (float)width / 3.0f;
 				vkCmdSetViewport(drawCmdBuffers[i], 0, 1, &viewport);
 				vkCmdBindPipeline(drawCmdBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.wireframe);

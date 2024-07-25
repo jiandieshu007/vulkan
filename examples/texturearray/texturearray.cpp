@@ -114,7 +114,7 @@ public:
 		// Get properties required for using and upload texture data from the ktx texture object
 		textureArray.width = ktxTexture->baseWidth;
 		textureArray.height = ktxTexture->baseHeight;
-		layerCount = ktxTexture->numLayers;
+		layerCount = ktxTexture->numLayers	;
         assert(layerCount <= MAX_LAYERS);
 		ktx_uint8_t *ktxTextureData = ktxTexture_GetData(ktxTexture);
 		ktx_size_t ktxTextureSize = ktxTexture_GetSize(ktxTexture);
