@@ -377,7 +377,7 @@ Only uses compute shader capabilities for running calculations on an input data 
 
 #### [Text rendering](examples/textoverlay/)
 
-99  Load and render a 2D text overlay created from the bitmap glyph data of a [stb font file](https://nothings.org/stb/font/). This data is uploaded as a texture and used for displaying text on top of a 3D scene in a second pass.
+Load and render a 2D text overlay created from the bitmap glyph data of a [stb font file](https://nothings.org/stb/font/). This data is uploaded as a texture and used for displaying text on top of a 3D scene in a second pass.
 
 #### [Distance field fonts](examples/distancefieldfonts/)
 

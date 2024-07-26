@@ -1,5 +1,6 @@
 #include "vulkanexamplebase.h"
 #include "VulkanglTFModel.h"
+#include "vulkan/vulkan_hpp_macros.hpp"
 
 
 struct Vertex {
@@ -255,8 +256,99 @@ public:
         subpassDescriptions[1].inputAttachmentCount = 3;
         subpassDescriptions[1].pInputAttachments = inputRefrences;
 
+        //subpass dependency
+
+        std::array<VkSubpassDependency, 4> subpassDependencies;
+
+        subpassDependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+        subpassDependencies[0].dstSubpass = 0;
+        subpassDependencies[0].srcStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+        subpassDependencies[0].dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+        subpassDependencies[0].srcAccessMask = 0;
+        subpassDependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        subpassDependencies[0].dependencyFlags = 0;
+
+        subpassDependencies[1].srcSubpass = VK_SUBPASS_EXTERNAL;
+        subpassDependencies[1].dstSubpass = 0;
+        subpassDependencies[1].srcStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+        subpassDependencies[1].dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;;
+        subpassDependencies[1].srcAccessMask = 0;
+        subpassDependencies[1].dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        subpassDependencies[1].dependencyFlags = 0;
+
+        subpassDependencies[2].srcSubpass = 0;
+        subpassDependencies[2].dstSubpass = 1;
+        subpassDependencies[2].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        subpassDependencies[2].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+        subpassDependencies[2].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        subpassDependencies[2].dstAccessMask = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
+        subpassDependencies[2].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+        subpassDependencies[3].srcSubpass = 1;
+        subpassDependencies[3].dstSubpass = VK_SUBPASS_EXTERNAL;
+        subpassDependencies[3].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        subpassDependencies[3].dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+        subpassDependencies[3].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+        subpassDependencies[3].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+        subpassDependencies[3].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+        VkRenderPassCreateInfo renderpassInfo = vks::initializers::renderPassCreateInfo();
+        renderpassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+        renderpassInfo.pAttachments = attachments.data();
+        renderpassInfo.subpassCount = static_cast<uint32_t>(subpassDescriptions.size());
+        renderpassInfo.pSubpasses = subpassDescriptions.data();
+        renderpassInfo.dependencyCount = static_cast<uint32_t>(subpassDependencies.size());
+        renderpassInfo.pDependencies = subpassDependencies.data();
+
+        vkCreateRenderPass(device, &renderpassInfo, nullptr, &renderPass);
+    }
+
+    void setupFrameBuffer() override
+    {
+	    if( attachments.width!=width || attachments.height != height)
+	    {
+            attachments.width = width;
+            attachments.height = height;
+            CreateGbufferAttachment();
+
+            std::vector<VkDescriptorImageInfo> descriptorImageInfos{
+                vks::initializers::descriptorImageInfo(VK_NULL_HANDLE,attachments.position.view,VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL),
+                vks::initializers::descriptorImageInfo(VK_NULL_HANDLE,attachments.normal.view,VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL),
+                vks::initializers::descriptorImageInfo(VK_NULL_HANDLE,attachments.albedo.view,VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL)
+            };
+            std::vector<VkWriteDescriptorSet> writeDescriptorsets;
+            for(uint32_t i=0; i<descriptorImageInfos.size(); ++i)
+            {
+                writeDescriptorsets.push_back(vks::initializers::writeDescriptorSet(descriptorSets.display, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, i, &descriptorImageInfos[i]));
+            }
+            vkUpdateDescriptorSets(device, static_cast<uint32_t>(writeDescriptorsets.size()), writeDescriptorsets.data(), 0, nullptr);
+	    }
+
+        VkImageView attachments[5];
+
+        VkFramebufferCreateInfo framebufferCI = vks::initializers::framebufferCreateInfo();
+
+        framebufferCI.width = width;
+        framebufferCI.height = height;
+        framebufferCI.layers = 1;
+        framebufferCI.renderPass = renderPass;
+        framebufferCI.attachmentCount = 5;
+        framebufferCI.pAttachments = attachments;
+
+        frameBuffers.resize(swapChain.imageCount);
+        for(uint32_t i=0; i<swapChain.imageCount; ++i)
+        {
+            attachments[0] = swapChain.buffers[i].view;
+            attachments[1] = this->attachments.position.view;
+            attachments[2] = this->attachments.normal.view;
+            attachments[3] = this->attachments.albedo.view;
+            attachments[4] = depthStencil.view;
+
+            vkCreateFramebuffer(device, &framebufferCI, nullptr, &frameBuffers[i]);
+        }
 
     }
+
     void LoadAsset()
     {
         const uint32_t glTFLoadingFlags = vkglTF::FileLoadingFlags::PreTransformVertices | vkglTF::FileLoadingFlags::PreMultiplyVertexColors | vkglTF::FileLoadingFlags::FlipY;
