@@ -229,6 +229,7 @@ public:
 		attchmentDescriptions[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		attchmentDescriptions[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		attchmentDescriptions[0].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
 		// Depth attachment
 		attchmentDescriptions[1].format = fbDepthFormat;
 		attchmentDescriptions[1].samples = VK_SAMPLE_COUNT_1_BIT;

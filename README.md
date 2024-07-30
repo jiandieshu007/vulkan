@@ -146,11 +146,11 @@ Generates a 3D texture on the cpu (using perlin noise), uploads it to the device
 
 #### [Sub passes](examples/subpasses/)
 
-Advanced example that uses sub passes and input attachments to write and read back data from framebuffer attachments (same location only) in single render pass. This is used to implement deferred render composition with added forward transparency in a single pass.
+99 Advanced example that uses sub passes and input attachments to write and read back data from framebuffer attachments (same location only) in single render pass. This is used to implement deferred render composition with added forward transparency in a single pass.
 
 #### [Offscreen rendering](examples/offscreen/)
 
-Basic offscreen rendering in two passes. First pass renders the mirrored scene to a separate framebuffer with color and depth attachments, second pass samples from that color attachment for rendering a mirror surface.
+99 Basic offscreen rendering in two passes. First pass renders the mirrored scene to a separate framebuffer with color and depth attachments, second pass samples from that color attachment for rendering a mirror surface.
 
 #### [CPU particle system](examples/particlesystem/)
 

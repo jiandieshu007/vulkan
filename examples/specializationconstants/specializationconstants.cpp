@@ -187,6 +187,8 @@ public:
 		pipelineCI.pStages = shaderStages.data();
 		pipelineCI.pVertexInputState = vkglTF::Vertex::getPipelineVertexInputState({ vkglTF::VertexComponent::Position, vkglTF::VertexComponent::Normal, vkglTF::VertexComponent::UV, vkglTF::VertexComponent::Color });
 
+
+
 		// Prepare specialization constants data
 
 		// Host data to take specialization constants from
