@@ -15,9 +15,16 @@ layout (set = 0, binding = 0) uniform UBOScene
 
 layout(push_constant) uniform PushConsts {
 	mat4 model;
+
+} pushConsts;
+
+
+layout(push_constant) uniform PushConstss {
 	uint alphaMask;
 	float alphaMaskCuttoff;
-} pushConsts;
+} pushConstss;
+
+
 
 layout (location = 0) out vec3 outNormal;
 layout (location = 1) out vec2 outUV;

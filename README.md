@@ -154,20 +154,20 @@ Generates a 3D texture on the cpu (using perlin noise), uploads it to the device
 
 #### [CPU particle system](examples/particlesystem/)
 
-Implements a simple CPU based particle system. Particle data is stored in host memory, updated on the CPU per-frame and synchronized with the device before it's rendered using pre-multiplied alpha.
+99 Implements a simple CPU based particle system. Particle data is stored in host memory, updated on the CPU per-frame and synchronized with the device before it's rendered using pre-multiplied alpha.
 
 #### [Stencil buffer](examples/stencilbuffer/)
 
-Uses the stencil buffer and its compare functionality for rendering a 3D model with dynamic outlines.
+99 Uses the stencil buffer and its compare functionality for rendering a 3D model with dynamic outlines.
 
 
 #### [Vertex attributes](examples/vertexattributes/)
 
-Demonstrates two different ways of passing vertices to the vertex shader using either interleaved or separate vertex attributes.
+99 Demonstrates two different ways of passing vertices to the vertex shader using either interleaved or separate vertex attributes.
 
 ### glTF
 
-These samples show how implement different features of the [glTF 2.0 3D format](https://www.khronos.org/gltf/) 3D transmission file format in detail.
+ These samples show how implement different features of the [glTF 2.0 3D format](https://www.khronos.org/gltf/) 3D transmission file format in detail.
 
 #### [glTF model loading and rendering](examples/gltfloading/)
 

@@ -19,6 +19,6 @@ out gl_PerVertex
 void main() 
 {
 	// Extrude along normal
-	vec4 pos = vec4(inPos.xyz + inNormal * ubo.outlineWidth, inPos.w);
+	vec4 pos = vec4(inPos.xyz - inNormal * ubo.outlineWidth, inPos.w);
 	gl_Position = ubo.projection * ubo.model * pos;
 }

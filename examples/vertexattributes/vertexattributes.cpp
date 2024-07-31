@@ -249,12 +249,12 @@ void VulkanExample::buildCommandBuffers()
 			// Using separate vertex attribute bindings requires binding multiple attribute buffers
 			VkDeviceSize offsets[4] = { 0, 0, 0, 0 };
 			std::array<VkBuffer, 4> buffers = { separateVertexBuffers.pos.buffer, separateVertexBuffers.normal.buffer, separateVertexBuffers.uv.buffer, separateVertexBuffers.tangent.buffer };
-			vkCmdBindVertexBuffers(drawCmdBuffers[i], 0, static_cast<uint32_t>(buffers.size()), buffers.data(), offsets);
+			vkCmdBindVertexBuffers(drawCmdBuffers[i], 1, static_cast<uint32_t>(buffers.size()), buffers.data(), offsets);
 		}
 		else {
 			// Using interleaved attribute bindings only requires one buffer to be bound
 			VkDeviceSize offsets[1] = { 0 };
-			vkCmdBindVertexBuffers(drawCmdBuffers[i], 0, 1, &interleavedVertexBuffer.buffer, offsets);
+			vkCmdBindVertexBuffers(drawCmdBuffers[i], 1, 1, &interleavedVertexBuffer.buffer, offsets);
 		}
 		// Render all nodes starting at top-level
 		for (auto& node : nodes) {
@@ -461,6 +461,8 @@ void VulkanExample::setupDescriptors()
 	pipelineLayoutCI.pPushConstantRanges = &pushConstantRange;
 	VK_CHECK_RESULT(vkCreatePipelineLayout(device, &pipelineLayoutCI, nullptr, &pipelineLayout));
 
+
+
 	// Descriptor set for scene matrices
 	VkDescriptorSetAllocateInfo allocInfo = vks::initializers::descriptorSetAllocateInfo(descriptorPool, &descriptorSetLayouts.matrices, 1);
 	VK_CHECK_RESULT(vkAllocateDescriptorSets(device, &allocInfo, &descriptorSet));
@@ -513,13 +515,13 @@ void VulkanExample::preparePipelines()
 	// Interleaved vertex attributes 
 	// One Binding (one buffer) and multiple attributes
 	const std::vector<VkVertexInputBindingDescription> vertexInputBindingsInterleaved = {
-		{ 0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX },
+		{ 1, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX },
 	};
 	const std::vector<VkVertexInputAttributeDescription> vertexInputAttributesInterleaved = {
-		{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, pos) },
-		{ 1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, normal) },
-		{ 2, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, uv) },
-		{ 3, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(Vertex, tangent) },
+		{ 0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, pos) },
+		{ 1, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, normal) },
+		{ 2, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, uv) },
+		{ 3, 1, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(Vertex, tangent) },
 	};
 
 	vertexInputStateCI = vks::initializers::pipelineVertexInputStateCreateInfo(vertexInputBindingsInterleaved, vertexInputAttributesInterleaved);
@@ -528,16 +530,16 @@ void VulkanExample::preparePipelines()
 	// Separate vertex attribute
 	// Multiple bindings (for each attribute buffer) and multiple attribues
 	const std::vector<VkVertexInputBindingDescription> vertexInputBindingsSeparate = {
-		{ 0, sizeof(glm::vec3), VK_VERTEX_INPUT_RATE_VERTEX },
 		{ 1, sizeof(glm::vec3), VK_VERTEX_INPUT_RATE_VERTEX },
-		{ 2, sizeof(glm::vec2), VK_VERTEX_INPUT_RATE_VERTEX },
-		{ 3, sizeof(glm::vec4), VK_VERTEX_INPUT_RATE_VERTEX },
+		{ 2, sizeof(glm::vec3), VK_VERTEX_INPUT_RATE_VERTEX },
+		{ 3, sizeof(glm::vec2), VK_VERTEX_INPUT_RATE_VERTEX },
+		{ 4, sizeof(glm::vec4), VK_VERTEX_INPUT_RATE_VERTEX },
 	};
 	const std::vector<VkVertexInputAttributeDescription> vertexInputAttributesSeparate = {
-		{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0 },
-		{ 1, 1, VK_FORMAT_R32G32B32_SFLOAT, 0 },
-		{ 2, 2, VK_FORMAT_R32G32_SFLOAT, 0 },
-		{ 3, 3, VK_FORMAT_R32G32B32A32_SFLOAT, 0 },
+		{ 0, 1, VK_FORMAT_R32G32B32_SFLOAT, 0 },
+		{ 1, 2, VK_FORMAT_R32G32B32_SFLOAT, 0 },
+		{ 2, 3, VK_FORMAT_R32G32_SFLOAT, 0 },
+		{ 3, 4, VK_FORMAT_R32G32B32A32_SFLOAT, 0 },
 	};
 
 	vertexInputStateCI = vks::initializers::pipelineVertexInputStateCreateInfo(vertexInputBindingsSeparate, vertexInputAttributesSeparate);

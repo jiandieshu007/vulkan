@@ -31,6 +31,7 @@ struct Particle {
 	float rotationSpeed;
 };
 
+
 class VulkanExample : public VulkanExampleBase
 {
 public:
