@@ -181,11 +181,12 @@ Demonstrates how to do GPU vertex skinning from animation data stored in a [glTF
 
 Renders a complete scene loaded from an [glTF 2.0](https://github.com/KhronosGroup/glTF) file. The sample is based on the glTF model loading sample, and adds data structures, functions and shaders required to render a more complex scene using Crytek's Sponza model with per-material pipelines and normal mapping.
 
+Target 
 ### Advanced
 
 #### [Multi sampling](examples/multisampling/)
 
-Implements multisample anti-aliasing (MSAA) using a renderpass with multisampled attachments and resolve attachments that get resolved into the visible frame buffer.
+99 Implements multisample anti-aliasing (MSAA) using a renderpass with multisampled attachments and resolve attachments that get resolved into the visible frame buffer.
 
 #### [High dynamic range](examples/hdr/)
 
@@ -193,11 +194,11 @@ Implements a high dynamic range rendering pipeline using 16/32 bit floating poin
 
 #### [Shadow mapping](examples/shadowmapping/)
 
-Rendering shadows for a directional light source. First pass stores depth values from the light's pov, second pass compares against these to check if a fragment is shadowed. Uses depth bias to avoid shadow artifacts and applies a PCF filter to smooth shadow edges.
+99 Rendering shadows for a directional light source. First pass stores depth values from the light's pov, second pass compares against these to check if a fragment is shadowed. Uses depth bias to avoid shadow artifacts and applies a PCF filter to smooth shadow edges.
 
 #### [Cascaded shadow mapping](examples/shadowmappingcascade/)
 
-Uses multiple shadow maps (stored as a layered texture) to increase shadow resolution for larger scenes. The camera frustum is split up into multiple cascades with corresponding layers in the shadow map. Layer selection for shadowing depth compare is then done by comparing fragment depth with the cascades' depths ranges.
+99 Uses multiple shadow maps (stored as a layered texture) to increase shadow resolution for larger scenes. The camera frustum is split up into multiple cascades with corresponding layers in the shadow map. Layer selection for shadowing depth compare is then done by comparing fragment depth with the cascades' depths ranges.
 
 #### [Omnidirectional shadow mapping](examples/shadowmappingomni/)
 

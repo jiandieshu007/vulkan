@@ -281,6 +281,7 @@ public:
 		imageInfo.format = depthFormat;
 		imageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 		VK_CHECK_RESULT(vkCreateImage(device, &imageInfo, nullptr, &depth.image));
+
 		VkMemoryAllocateInfo memAlloc = vks::initializers::memoryAllocateInfo();
 		VkMemoryRequirements memReqs;
 		vkGetImageMemoryRequirements(device, depth.image, &memReqs);
@@ -288,6 +289,7 @@ public:
 		memAlloc.memoryTypeIndex = vulkanDevice->getMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 		VK_CHECK_RESULT(vkAllocateMemory(device, &memAlloc, nullptr, &depth.mem));
 		VK_CHECK_RESULT(vkBindImageMemory(device, depth.image, depth.mem, 0));
+
 		// Full depth map view (all layers)
 		VkImageViewCreateInfo viewInfo = vks::initializers::imageViewCreateInfo();
 		viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
@@ -496,6 +498,7 @@ public:
 		};
 		vkUpdateDescriptorSets(device, static_cast<uint32_t>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, NULL);
 
+
 		// Per-cascade descriptor sets
 		// Each descriptor set represents a single layer of the array texture
 		for (uint32_t i = 0; i < SHADOW_MAP_CASCADE_COUNT; i++) {
@@ -612,6 +615,7 @@ public:
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 			&uniformBuffers.VS,
 			sizeof(uboVS)));
+
 		VK_CHECK_RESULT(vulkanDevice->createBuffer(
 			VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
@@ -652,7 +656,7 @@ public:
 			float log = minZ * std::pow(ratio, p);
 			float uniform = minZ + range * p;
 			float d = cascadeSplitLambda * (log - uniform) + uniform;
-			cascadeSplits[i] = (d - nearClip) / clipRange;
+			cascadeSplits[i] = (d - minZ) / clipRange;
 		}
 
 		// Calculate orthographic projection matrix for each cascade

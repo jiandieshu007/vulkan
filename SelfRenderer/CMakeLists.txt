@@ -7,40 +7,45 @@ function(buildExample EXAMPLE_NAME)
 	message(STATUS "Generating project file for example in ${EXAMPLE_FOLDER}")
 	# Main
 	file(GLOB SOURCE *.cpp ${BASE_HEADERS} ${EXAMPLE_FOLDER}/*.cpp)
-	SET(MAIN_CPP ${EXAMPLE_FOLDER}/${EXAMPLE_NAME}.cpp)
+	SET(MAIN_CPP ${EXAMPLE_NAME}.cpp)
+
 	if(EXISTS ${EXAMPLE_FOLDER}/main.cpp)
 		SET(MAIN_CPP ${EXAMPLE_FOLDER}/main.cpp)
 	ENDIF()
 	if(EXISTS ${EXAMPLE_FOLDER}/${EXAMPLE_NAME}.h)
 		SET(MAIN_HEADER ${EXAMPLE_FOLDER}/${EXAMPLE_NAME}.h)
 	ENDIF()
+
 	# imgui example requires additional source files
 	IF(${EXAMPLE_NAME} STREQUAL "imgui")
 		file(GLOB ADD_SOURCE "../external/imgui/*.cpp")
 		SET(SOURCE ${SOURCE} ${ADD_SOURCE})
 	ENDIF()
+	
 	# wayland requires additional source files
 	IF(USE_WAYLAND_WSI)
 		SET(SOURCE ${SOURCE} ${CMAKE_BINARY_DIR}/xdg-shell-client-protocol.h ${CMAKE_BINARY_DIR}/xdg-shell-protocol.c)
 	ENDIF()
+	
 	# Add shaders
-	set(SHADER_DIR_GLSL "../shaders/glsl/${EXAMPLE_NAME}")
+	set(SHADER_DIR_GLSL "../shader")
 	file(GLOB SHADERS_GLSL "${SHADER_DIR_GLSL}/*.vert" "${SHADER_DIR_GLSL}/*.frag" "${SHADER_DIR_GLSL}/*.comp" "${SHADER_DIR_GLSL}/*.geom" "${SHADER_DIR_GLSL}/*.tesc" "${SHADER_DIR_GLSL}/*.tese" "${SHADER_DIR_GLSL}/*.mesh" "${SHADER_DIR_GLSL}/*.task" "${SHADER_DIR_GLSL}/*.rgen" "${SHADER_DIR_GLSL}/*.rchit" "${SHADER_DIR_GLSL}/*.rmiss" "${SHADER_DIR_GLSL}/*.rcall" "${SHADER_DIR_GLSL}/*.rahit" "${SHADER_DIR_GLSL}/*.rint" "${SHADER_DIR_GLSL}/*.glsl")
 
-	source_group("Shaders\\GLSL" FILES ${SHADERS_GLSL})
-	source_group("Shaders\\HLSL" FILES ${SHADERS_HLSL})
+	source_group("Shaders" FILES ${SHADERS_GLSL})
+#	source_group("Shaders\\HLSL" FILES ${SHADERS_HLSL})
 	# Add optional readme / tutorial
 	file(GLOB README_FILES "${EXAMPLE_FOLDER}/*.md")
 	if(WIN32)
-		add_executable(${EXAMPLE_NAME} WIN32 ${MAIN_CPP} ${SOURCE} ${MAIN_HEADER} ${SHADERS_GLSL} ${SHADERS_HLSL} ${README_FILES})
+		add_executable(${EXAMPLE_NAME} WIN32 ${MAIN_CPP} ${SOURCE} ${MAIN_HEADER} ${SHADERS_GLSL}  ${README_FILES}  "RenderPass/RenderPass.h" "RenderPass/Geometry.h" "RenderPass/Geometry.cpp")
 		target_link_libraries(${EXAMPLE_NAME} base ${Vulkan_LIBRARY} ${WINLIBS})
 	else(WIN32)
-		add_executable(${EXAMPLE_NAME} ${MAIN_CPP} ${SOURCE} ${MAIN_HEADER} ${SHADERS_GLSL} ${SHADERS_HLSL} ${README_FILES})
+		add_executable(${EXAMPLE_NAME} ${MAIN_CPP} ${SOURCE} ${MAIN_HEADER} ${SHADERS_GLSL}  ${README_FILES})
 		target_link_libraries(${EXAMPLE_NAME} base )
 	endif(WIN32)
 
 	file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 	set_target_properties(${EXAMPLE_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
+	##
 	if(${EXAMPLE_NAME} STREQUAL "texture3d")
 		if(APPLE)
 			# SRS - Use MacPorts paths as default since the same on x86 and Apple Silicon, can override for homebrew on cmake command line
@@ -83,95 +88,7 @@ function(buildExamples)
 endfunction(buildExamples)
 
 set(EXAMPLES
-	bloom
-	computecloth
-	computecullandlod
-	computeheadless
-	computenbody
-	computeparticles
-	computeraytracing
-	computeshader
-	conditionalrender
-	conservativeraster
-	debugprintf
-	debugutils
-	deferred
-	deferredmultisampling
-	deferredshadows
-	descriptorbuffer
-	descriptorindexing
-	descriptorsets
-	displacement
-	distancefieldfonts
-	dynamicrendering
-	dynamicstate
-	dynamicuniformbuffer	
-	gears
-	geometryshader
-	gltfloading
-	gltfscenerendering
-	gltfskinning
-	graphicspipelinelibrary
-	hdr
-	imgui
-	indirectdraw
-	inlineuniformblocks
-	inputattachments
-	instancing
-	meshshader
-	multisampling
-	multithreading
-	multiview
-	negativeviewportheight	
-	occlusionquery
-	offscreen
-	oit
-	parallaxmapping
-	particlesystem
-	pbrbasic
-	pbribl
-	pbrtexture
-	pipelines
-	pipelinestatistics
-	pushconstants
-	pushdescriptors
-	radialblur
-	rayquery
-	raytracingbasic
-	raytracingcallable
-	raytracinggltf
-	raytracingintersection
-	raytracingreflections
-	raytracingpositionfetch
-	raytracingsbtdata
-	raytracingshadows
-	raytracingtextures
-	renderheadless
-	screenshot
-	shaderobjects
-	shadowmapping
-	shadowmappingomni
-	shadowmappingcascade
-	specializationconstants
-	sphericalenvmapping
-	ssao
-	stencilbuffer
-	subpasses
-	terraintessellation
-	tessellation
-	textoverlay
-	texture
-	texture3d
-	texturearray
-	texturecubemap
-	texturecubemaparray
-	texturemipmapgen
-	texturesparseresidency
-	triangle
-	variablerateshading
-	vertexattributes
-	viewportarray
-	vulkanscene
+	vknine
 )
 
 buildExamples()
