@@ -791,7 +791,7 @@ VulkanExampleBase::VulkanExampleBase()
 
 	// Command line arguments
 	commandLineParser.add("help", { "--help" }, 0, "Show help");
-	commandLineParser.add("validation", { "-v", "--validation" }, 1, "Enable validation layers");
+	commandLineParser.add("validation", { "-v", "--validation" }, 0, "Enable validation layers");
 	commandLineParser.add("vsync", { "-vs", "--vsync" }, 0, "Enable V-Sync");
 	commandLineParser.add("fullscreen", { "-f", "--fullscreen" }, 0, "Start in fullscreen mode");
 	commandLineParser.add("width", { "-w", "--width" }, 1, "Set window width");

@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <iterator>
 #include <vector>
+#include<array>
 #include "vulkan/vulkan.h"
 #include "VulkanDevice.h"
 #include "VulkanTools.h"
@@ -223,6 +224,11 @@ namespace vks
 
 			return static_cast<uint32_t>(attachments.size() - 1);
 		}
+		/*
+		 *add a swapchainimage attachment for present
+		 *
+		 */
+
 
 		/**
 		* Creates a default sampler for sampling from any of the framebuffer attachments

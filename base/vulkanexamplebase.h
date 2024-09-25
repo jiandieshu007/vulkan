@@ -73,8 +73,14 @@
 #include "camera.hpp"
 #include "benchmark.hpp"
 
+
+
 class VulkanExampleBase
 {
+public:
+	friend class GeometryPass;
+	friend class LightPass;
+	friend  class testPass;
 private:
 	std::string getWindowTitle();
 	uint32_t destWidth;

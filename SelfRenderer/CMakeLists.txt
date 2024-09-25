@@ -28,7 +28,7 @@ function(buildExample EXAMPLE_NAME)
 	ENDIF()
 	
 	# Add shaders
-	set(SHADER_DIR_GLSL "../shader")
+	set(SHADER_DIR_GLSL "../shaders/shader")
 	file(GLOB SHADERS_GLSL "${SHADER_DIR_GLSL}/*.vert" "${SHADER_DIR_GLSL}/*.frag" "${SHADER_DIR_GLSL}/*.comp" "${SHADER_DIR_GLSL}/*.geom" "${SHADER_DIR_GLSL}/*.tesc" "${SHADER_DIR_GLSL}/*.tese" "${SHADER_DIR_GLSL}/*.mesh" "${SHADER_DIR_GLSL}/*.task" "${SHADER_DIR_GLSL}/*.rgen" "${SHADER_DIR_GLSL}/*.rchit" "${SHADER_DIR_GLSL}/*.rmiss" "${SHADER_DIR_GLSL}/*.rcall" "${SHADER_DIR_GLSL}/*.rahit" "${SHADER_DIR_GLSL}/*.rint" "${SHADER_DIR_GLSL}/*.glsl")
 
 	source_group("Shaders" FILES ${SHADERS_GLSL})
@@ -36,7 +36,8 @@ function(buildExample EXAMPLE_NAME)
 	# Add optional readme / tutorial
 	file(GLOB README_FILES "${EXAMPLE_FOLDER}/*.md")
 	if(WIN32)
-		add_executable(${EXAMPLE_NAME} WIN32 ${MAIN_CPP} ${SOURCE} ${MAIN_HEADER} ${SHADERS_GLSL}  ${README_FILES}  "RenderPass/RenderPass.h" "RenderPass/Geometry.h" "RenderPass/Geometry.cpp")
+		add_executable(${EXAMPLE_NAME} WIN32 ${MAIN_CPP} ${SOURCE} ${MAIN_HEADER} ${SHADERS_GLSL}  ${README_FILES}  
+		"RenderPass/RenderPass.h" "RenderPass/Geometry.h" "RenderPass/Geometry.cpp"  "RenderPass/lightPass.h" "RenderPass/lightPass.cpp"  )
 		target_link_libraries(${EXAMPLE_NAME} base ${Vulkan_LIBRARY} ${WINLIBS})
 	else(WIN32)
 		add_executable(${EXAMPLE_NAME} ${MAIN_CPP} ${SOURCE} ${MAIN_HEADER} ${SHADERS_GLSL}  ${README_FILES})

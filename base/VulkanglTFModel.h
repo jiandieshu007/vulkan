@@ -313,4 +313,4 @@ namespace vkglTF
 		Node* nodeFromIndex(uint32_t index);
 		void prepareNodeDescriptor(vkglTF::Node* node, VkDescriptorSetLayout descriptorSetLayout);
 	};
-}
+} 

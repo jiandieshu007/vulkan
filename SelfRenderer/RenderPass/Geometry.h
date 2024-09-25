@@ -1,17 +1,30 @@
 #pragma once
 
-#include "RenderPass.h"
+#include "./RenderPass.h"
+
 
 class GeometryPass : public RenderPass {
 public:
-	GeometryPass(vks::VulkanDevice& device) : RenderPass(device) {}
-
-	virtual void prepare(VkQueue& queue) override;
-	virtual void draw(VkCommandBuffer& cmdBuffer) override;
+	GeometryPass(VulkanExampleBase* example) : RenderPass(example) {}
+	virtual ~GeometryPass()
+	{
+		uboBuffer.destroy();
+		vkDestroySemaphore(Device->logicalDevice, geometey, nullptr);
+		vkFreeCommandBuffers(Device->logicalDevice, exampleBase->cmdPool, 1, &commandBuffer);
+	}
+	virtual void prepare() override;
+	virtual void draw() override;
 	virtual void update() override;
+
+	
 	struct UBO{
 		glm::mat4 projection;
 		glm::mat4 model;
 		glm::mat4 view;
 	} uboMvp;
+
+	vks::Buffer uboBuffer;
+	VkSemaphore geometey;
+	VkCommandBuffer commandBuffer;
+	void updateUboBuffer();
 };
