@@ -8,10 +8,13 @@ layout (binding = 3) uniform sampler2D samplerDepth;
 
 #define LightCount 32
 
-layout (std430, binding = 4) buffer  PointLight{
+struct pointLight{
 	vec3 position;
 	vec3 intensity;
-} Lights[LightCount];
+}
+layout (std430, binding = 4) buffer  Lights{
+	pointLight pointsLights.pointLights[LightCount];
+}
 
 layout (push_constant) uniform PushConstants {
     vec3 viewPos; 
@@ -32,15 +35,15 @@ void main()
 	vec3 outColor = ao;
 
 	for (int i = 0; i < LightCount; ++i) {
-        vec3 l = Lights[i].position - fragPos;
+        vec3 l = Lights.pointLights[i].position - fragPos;
 		float r = l.length();
 
 		l = normalize(l);
 		vec3 v = normalize(view.viewPos-fragPos);
 
 		vec3 h = normalize(-l+v);
-		vec3 id = kd * Lights[i].intensity * max(0, dot(normal,-l))/r/r;
-		vec3 is = ks * Lights[i].intensity * pow( max(0, dot(normal,-l)),8) /r/r;
+		vec3 id = kd * Lights.pointLights[i].intensity * max(0, dot(normal,-l))/r/r;
+		vec3 is = ks * Lights.pointLights[i].intensity * pow( max(0, dot(normal,-l)),8) /r/r;
 		outColor += id + is;
 
 

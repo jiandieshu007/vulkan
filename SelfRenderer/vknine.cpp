@@ -119,7 +119,6 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)
 	vulkanExample->setupWindow(hInstance, WndProc);
 	vulkanExample->prepare();
 	vulkanExample->renderLoop();
-	delete(vulkanExample);
-    system("pause");
+    delete(vulkanExample);
 	return 0;
 }

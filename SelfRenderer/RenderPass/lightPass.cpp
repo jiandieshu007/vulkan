@@ -4,7 +4,7 @@ void LightPass::prepare()
 {
     prepareLight();
     std::vector<VkDescriptorPoolSize> poolSizes = {
-        vks::initializers::descriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,LightCount),
+        vks::initializers::descriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,1),
 		vks::initializers::descriptorPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4)
     };
     auto PoolCreateInfo = vks::initializers::descriptorPoolCreateInfo(poolSizes, 1);
@@ -15,7 +15,7 @@ void LightPass::prepare()
         vks::initializers::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,VK_SHADER_STAGE_FRAGMENT_BIT,1),
         vks::initializers::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,VK_SHADER_STAGE_FRAGMENT_BIT,2),
         vks::initializers::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,VK_SHADER_STAGE_FRAGMENT_BIT,3),
-        vks::initializers::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,VK_SHADER_STAGE_FRAGMENT_BIT,4,LightCount)
+        vks::initializers::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,VK_SHADER_STAGE_FRAGMENT_BIT,4,1)
     };
     auto descriptorSetLayoutCreateInfo = vks::initializers::descriptorSetLayoutCreateInfo(descriptorSetLayoutBindings.data(), descriptorSetLayoutBindings.size());
     VK_CHECK_RESULT(vkCreateDescriptorSetLayout(Device->logicalDevice, &descriptorSetLayoutCreateInfo, nullptr, &DescriptorSetLayout));
@@ -135,7 +135,7 @@ void LightPass::prepareLight()
     for(int i=0; i<LightCount; ++i)
     {
         PointLight light;
-        light.position = {randomFloat(-10,10),randomFloat(-10,10),randomFloat(-10,10)};
+        light.position = {randomFloat(-2,2),randomFloat(-2,1),randomFloat(-10,0)};
         light.radiance = glm::vec3(30);
         pointLights.push_back(light);
     }
@@ -148,6 +148,5 @@ void LightPass::prepareLight()
 
 void LightPass::updateLight()
 {
-
 
 }
