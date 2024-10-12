@@ -17,11 +17,7 @@ public:
 	virtual void update() override;
 	virtual void createRenderpass() override;
 	
-	struct UBO{
-		glm::mat4 projection;
-		glm::mat4 model;
-		glm::mat4 view;
-	} uboMvp;
+
 
 	vks::Buffer uboBuffer;
 	VkSemaphore geometey;

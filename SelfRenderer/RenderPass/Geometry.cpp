@@ -157,20 +157,6 @@ void GeometryPass::draw()
 	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, PipelineLayout, 0, 1, &DescriptorSet, 0, nullptr);
 	scene->draw(commandBuffer, vkglTF::RenderFlags::BindImages, PipelineLayout);
 
-	//VkMemoryBarrier memoryBarrier = vks::initializers::memoryBarrier();
-	//memoryBarrier.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-	//memoryBarrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-
-	//vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-	//	0, 1, &memoryBarrier, 0, nullptr, 0, nullptr);
-
-	//memoryBarrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-	//memoryBarrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-
-
-	//vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-	//	0, 1, &memoryBarrier, 0, nullptr, 0, nullptr);
 
 	vkCmdEndRenderPass(commandBuffer);
 

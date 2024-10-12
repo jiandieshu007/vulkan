@@ -16,7 +16,6 @@ constexpr int LightCount = 2;
 struct PointLight {
 	alignas(16) glm::vec3 position;
 	alignas(16) glm::vec3 intensity;
-	glm::mat4 view[6];
 };
 
 struct UBO {
