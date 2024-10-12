@@ -5,10 +5,6 @@
 #include <random>
 
 
-
-
-
-
 class LightPass : public RenderPass {
 public:
 
