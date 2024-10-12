@@ -4,7 +4,7 @@ void LightPass::prepare()
 {
     prepareLight();
     std::vector<VkDescriptorPoolSize> poolSizes = {
-        vks::initializers::descriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,LightCount),
+        vks::initializers::descriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,1),
 		vks::initializers::descriptorPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4)
     };
     auto PoolCreateInfo = vks::initializers::descriptorPoolCreateInfo(poolSizes, 1);
@@ -15,7 +15,7 @@ void LightPass::prepare()
         vks::initializers::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,VK_SHADER_STAGE_FRAGMENT_BIT,1),
         vks::initializers::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,VK_SHADER_STAGE_FRAGMENT_BIT,2),
         vks::initializers::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,VK_SHADER_STAGE_FRAGMENT_BIT,3),
-        vks::initializers::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,VK_SHADER_STAGE_FRAGMENT_BIT,4,LightCount)
+        vks::initializers::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,VK_SHADER_STAGE_FRAGMENT_BIT,4,1)
     };
     auto descriptorSetLayoutCreateInfo = vks::initializers::descriptorSetLayoutCreateInfo(descriptorSetLayoutBindings.data(), descriptorSetLayoutBindings.size());
     VK_CHECK_RESULT(vkCreateDescriptorSetLayout(Device->logicalDevice, &descriptorSetLayoutCreateInfo, nullptr, &DescriptorSetLayout));
@@ -118,7 +118,7 @@ void LightPass::draw()
 
         vkCmdBindPipeline(exampleBase->drawCmdBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, Pipeline);
 
-        vkCmdPushConstants(exampleBase->drawCmdBuffers[i], PipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(glm::vec3), &exampleBase->camera.position);
+        vkCmdPushConstants(exampleBase->drawCmdBuffers[i], PipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(glm::vec3), &exampleBase->camera.viewPos);
 
         vkCmdDraw(exampleBase->drawCmdBuffers[i], 3, 1, 0, 0);
 
@@ -130,13 +130,17 @@ void LightPass::draw()
     }
 }
 
+void LightPass::createRenderpass()
+{
+}
+
 void LightPass::prepareLight()
 {
     for(int i=0; i<LightCount; ++i)
     {
         PointLight light;
-        light.position = {randomFloat(-10,10),randomFloat(-10,10),randomFloat(-10,10)};
-        light.radiance = glm::vec3(30);
+        light.position = {randomFloat(-3,3),randomFloat(-3,0),randomFloat(-12,1)};
+        light.intensity = glm::vec3(randomFloat(0,1));
         pointLights.push_back(light);
     }
     Device->createBuffer(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &lightBuffer, sizeof(PointLight) * LightCount);
@@ -148,6 +152,5 @@ void LightPass::prepareLight()
 
 void LightPass::updateLight()
 {
-
 
 }

@@ -80,7 +80,7 @@ class VulkanExampleBase
 public:
 	friend class GeometryPass;
 	friend class LightPass;
-	friend  class testPass;
+	friend  class ShadowPass;
 private:
 	std::string getWindowTitle();
 	uint32_t destWidth;

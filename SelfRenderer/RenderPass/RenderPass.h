@@ -10,11 +10,20 @@
 
 const std::string shaderDir = "shader/";
 
-struct PointLight
-{
-	glm::vec3 position;
-	glm::vec3 radiance;
+
+constexpr int LightCount = 2;
+
+struct PointLight {
+	alignas(16) glm::vec3 position;
+	alignas(16) glm::vec3 intensity;
+	glm::mat4 view[6];
 };
+
+struct UBO {
+	glm::mat4 projection;
+	glm::mat4 model;
+	glm::mat4 view;
+} uboMvp;
 
 inline float randomFloat(float min, float max) {
 	std::random_device rd;
@@ -55,6 +64,7 @@ public:
 	virtual void prepare() = 0;
 	virtual void draw() = 0;
 	virtual void update() = 0;
+	virtual void createRenderpass() = 0;
 	void loadScene(const std::string& path, VkQueue& queue) {
 		vkglTF::descriptorBindingFlags = vkglTF::DescriptorBindingFlags::ImageBaseColor;
 		const uint32_t gltfLoadingFlags = vkglTF::FileLoadingFlags::FlipY | vkglTF::FileLoadingFlags::PreTransformVertices;

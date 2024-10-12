@@ -37,7 +37,7 @@ function(buildExample EXAMPLE_NAME)
 	file(GLOB README_FILES "${EXAMPLE_FOLDER}/*.md")
 	if(WIN32)
 		add_executable(${EXAMPLE_NAME} WIN32 ${MAIN_CPP} ${SOURCE} ${MAIN_HEADER} ${SHADERS_GLSL}  ${README_FILES}  
-		"RenderPass/RenderPass.h" "RenderPass/Geometry.h" "RenderPass/Geometry.cpp"  "RenderPass/lightPass.h" "RenderPass/lightPass.cpp"  )
+		"RenderPass/RenderPass.h" "RenderPass/Geometry.h" "RenderPass/Geometry.cpp"  "RenderPass/lightPass.h" "RenderPass/lightPass.cpp"   "RenderPass/shadowPass.h" "RenderPass/shadowPas.cpp")
 		target_link_libraries(${EXAMPLE_NAME} base ${Vulkan_LIBRARY} ${WINLIBS})
 	else(WIN32)
 		add_executable(${EXAMPLE_NAME} ${MAIN_CPP} ${SOURCE} ${MAIN_HEADER} ${SHADERS_GLSL}  ${README_FILES})

@@ -7,12 +7,12 @@
 
 
 
-constexpr int LightCount = 32;
+
 
 class LightPass : public RenderPass {
 public:
 
-	LightPass(VulkanExampleBase* example, GeometryPass* gPass) : RenderPass(example), geometryPass(gPass) {}
+	explicit LightPass(VulkanExampleBase* example, GeometryPass* gPass, ShadowPass* spass) : RenderPass(example), geometryPass(gPass), shadowPass(spass) {}
 	~LightPass()
 	{
 		lightBuffer.destroy();
@@ -20,10 +20,13 @@ public:
 	virtual void prepare() override;
 	virtual void update() override;
 	virtual void draw() override;
+	virtual void createRenderpass() override;
 	void prepareLight();
 	void updateLight();
 	std::vector<PointLight> pointLights;
 	vks::Buffer lightBuffer;
 
 	GeometryPass* geometryPass;
+	ShadowPass* shadowPass;
+
 };	

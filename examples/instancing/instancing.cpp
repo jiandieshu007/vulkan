@@ -12,7 +12,7 @@
 #if defined(__ANDROID__)
 #define INSTANCE_COUNT 4096
 #else
-#define INSTANCE_COUNT 8192
+#define INSTANCE_COUNT 40960
 #endif
 
 class VulkanExample : public VulkanExampleBase

@@ -15,7 +15,7 @@ public:
 	virtual void prepare() override;
 	virtual void draw() override;
 	virtual void update() override;
-
+	virtual void createRenderpass() override;
 	
 	struct UBO{
 		glm::mat4 projection;

@@ -23,11 +23,11 @@ void main()
 	
 	outUV = inUV;
 
-	// Vertex position in view space
-	outPos = vec3(ubo.view * ubo.model * inPos);
+	// Vertex position in model space
+	outPos =  glm::vec3(ubo.model * inPos);
 
 	// Normal in view space
-	mat3 normalMatrix = transpose(inverse(mat3(ubo.view * ubo.model)));
+	mat3 normalMatrix = transpose(inverse(mat3(ubo.model)));
 	outNormal = normalMatrix * inNormal;
 
 	outColor = inColor;

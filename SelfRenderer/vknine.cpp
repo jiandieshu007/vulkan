@@ -16,6 +16,7 @@ public:
         camera.position = { 1.0f, 0.75f, 0.0f };
         camera.setRotation(glm::vec3(0.0f, 90.0f, 0.0f));
         camera.setPerspective(60.0f, (float)width / (float)height, 0.1f, 256.0f);
+
     }
     ~VulkanExample()
     {
@@ -35,30 +36,15 @@ public:
         vkResetFences(device, 1, &fenceforQueue);
 
         VulkanExampleBase::prepareFrame();
-        submitInfo.pWaitSemaphores = &semaphores.presentComplete;
-        // Signal ready with offscreen semaphore
-        submitInfo.pSignalSemaphores = &gPass->geometey;
 
-        // Submit work
-        submitInfo.commandBufferCount = 1;
-        submitInfo.pCommandBuffers = &gPass->commandBuffer;
+        std::vector<VkCommandBuffer> cmds;
+        cmds.push_back(gPass->commandBuffer);
+        cmds.push_back(drawCmdBuffers[currentBuffer]);
+
+        submitInfo.commandBufferCount = cmds.size();
+        submitInfo.pCommandBuffers = cmds.data();
+
         VK_CHECK_RESULT(vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE));
-
-        // Scene rendering
-
-        // Wait for offscreen semaphore
-        submitInfo.pWaitSemaphores = &gPass->geometey;
-        // Signal ready with render complete semaphore
-        submitInfo.pSignalSemaphores = &semaphores.renderComplete;
-
-        // Submit work
-        submitInfo.pCommandBuffers = &drawCmdBuffers[currentBuffer];
-
-        VK_CHECK_RESULT(vkQueueSubmit(queue, 1, &submitInfo, fenceforQueue));
-
-        vkWaitForFences(device, 1, &fenceforQueue, VK_TRUE, UINT64_MAX);
-
-
 
         VulkanExampleBase::submitFrame();
     }
@@ -72,7 +58,32 @@ public:
 
     void prepare() override
     {
+        VkPhysicalDeviceProperties deviceProperties;
+        vkGetPhysicalDeviceProperties(physicalDevice, &deviceProperties);
+
+        // Maximum descriptor sets in pipeline
+        uint32_t maxBoundDescriptorSets = deviceProperties.limits.maxBoundDescriptorSets;
+
+        // Maximum descriptors per type in each shader stage
+        uint32_t maxUniformBuffersPerStage = deviceProperties.limits.maxPerStageDescriptorUniformBuffers;
+        uint32_t maxStorageBuffersPerStage = deviceProperties.limits.maxPerStageDescriptorStorageBuffers;
+
+        // Maximum descriptors across the entire pipeline
+        uint32_t maxUniformBuffers = deviceProperties.limits.maxDescriptorSetUniformBuffers;
+        uint32_t maxStorageBuffers = deviceProperties.limits.maxDescriptorSetStorageBuffers;
+
+        std::cout << "Max Bound Descriptor Sets: " << maxBoundDescriptorSets << std::endl;
+        std::cout << "Max Uniform Buffers per Stage: " << maxUniformBuffersPerStage << std::endl;
+        std::cout << "Max Storage Buffers per Stage: " << maxStorageBuffersPerStage << std::endl;
+        std::cout << "Max Uniform Buffers in Pipeline: " << maxUniformBuffers << std::endl;
+        std::cout << "Max Storage Buffers in Pipeline: " << maxStorageBuffers << std::endl;
+
+
         VulkanExampleBase::prepare();
+        VkPhysicalDeviceProperties properties;
+
+        vkGetPhysicalDeviceProperties(physicalDevice, &properties);
+        uint32_t maxSSBOsPerStage = properties.limits.maxPerStageDescriptorStorageBuffers;
 
         auto fenceCreateInfo = vks::initializers::fenceCreateInfo();
         VK_CHECK_RESULT(vkCreateFence(device, &fenceCreateInfo, nullptr, &fenceforQueue));
@@ -120,6 +131,5 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)
 	vulkanExample->prepare();
 	vulkanExample->renderLoop();
 	delete(vulkanExample);
-    system("pause");
 	return 0;
 }
