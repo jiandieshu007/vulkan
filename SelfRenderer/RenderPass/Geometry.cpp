@@ -163,7 +163,7 @@ void GeometryPass::draw()
 	VK_CHECK_RESULT(vkEndCommandBuffer(commandBuffer));
 }
 
-void GeometryPass::update()
+void GeometryPass::update(VkQueue& queue)
 {
 	updateUboBuffer();
 }

@@ -3,7 +3,10 @@
 #include "vulkan/vulkan_hpp_macros.hpp"
 
 #include "./RenderPass/Geometry.h"
+#include "./RenderPass/shadowPass.h"
 #include "./RenderPass/lightPass.h"
+
+
 class VulkanExample : public VulkanExampleBase {
 public:
     VulkanExample() : VulkanExampleBase() {
@@ -30,6 +33,10 @@ public:
         if (deviceFeatures.samplerAnisotropy) {
             enabledFeatures.samplerAnisotropy = VK_TRUE;
         }
+        if( deviceFeatures.imageCubeArray )
+        {
+            enabledFeatures.imageCubeArray = VK_TRUE;
+        }
     };
     void draw()
     {
@@ -52,32 +59,13 @@ public:
     void buildCommandBuffers() override
     {
         gPass->draw();
+        shadowPass->draw();
         lightPass->draw();
     }
 
 
     void prepare() override
     {
-        VkPhysicalDeviceProperties deviceProperties;
-        vkGetPhysicalDeviceProperties(physicalDevice, &deviceProperties);
-
-        // Maximum descriptor sets in pipeline
-        uint32_t maxBoundDescriptorSets = deviceProperties.limits.maxBoundDescriptorSets;
-
-        // Maximum descriptors per type in each shader stage
-        uint32_t maxUniformBuffersPerStage = deviceProperties.limits.maxPerStageDescriptorUniformBuffers;
-        uint32_t maxStorageBuffersPerStage = deviceProperties.limits.maxPerStageDescriptorStorageBuffers;
-
-        // Maximum descriptors across the entire pipeline
-        uint32_t maxUniformBuffers = deviceProperties.limits.maxDescriptorSetUniformBuffers;
-        uint32_t maxStorageBuffers = deviceProperties.limits.maxDescriptorSetStorageBuffers;
-
-        std::cout << "Max Bound Descriptor Sets: " << maxBoundDescriptorSets << std::endl;
-        std::cout << "Max Uniform Buffers per Stage: " << maxUniformBuffersPerStage << std::endl;
-        std::cout << "Max Storage Buffers per Stage: " << maxStorageBuffersPerStage << std::endl;
-        std::cout << "Max Uniform Buffers in Pipeline: " << maxUniformBuffers << std::endl;
-        std::cout << "Max Storage Buffers in Pipeline: " << maxStorageBuffers << std::endl;
-
 
         VulkanExampleBase::prepare();
         VkPhysicalDeviceProperties properties;
@@ -91,7 +79,10 @@ public:
         gPass = new GeometryPass( (this));
         gPass->prepare();
 
-        lightPass = new LightPass(this, gPass);
+        shadowPass = new ShadowPass(this, gPass);
+        shadowPass->prepare();
+
+        lightPass = new LightPass(this, gPass, shadowPass);
         lightPass->prepare();
 
         buildCommandBuffers();
@@ -101,11 +92,12 @@ public:
     {
         if (!prepared)
             return;
-        gPass->update();
+        gPass->update(queue);
         draw();
     }
 private:
     GeometryPass* gPass = VK_NULL_HANDLE;
+    ShadowPass* shadowPass = VK_NULL_HANDLE;
     LightPass* lightPass = VK_NULL_HANDLE;
     VkFence fenceforQueue = VK_NULL_HANDLE;
 };
@@ -130,6 +122,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)
 	vulkanExample->setupWindow(hInstance, WndProc);
 	vulkanExample->prepare();
 	vulkanExample->renderLoop();
+    system("pause");
 	delete(vulkanExample);
 	return 0;
 }

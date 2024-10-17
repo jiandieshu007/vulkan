@@ -1,9 +1,9 @@
 #version 450
 
-layout (binding = 0) uniform sampler2D samplerposition;
-layout (binding = 1) uniform sampler2D samplerNormal;
+layout (binding = 0) uniform sampler2D samplerposition; // world space
+layout (binding = 1) uniform sampler2D samplerNormal;  // world space
 layout (binding = 2) uniform sampler2D samplerAlbedo;
-layout (binding = 3) uniform sampler2D samplerDepth;
+layout (binding = 3) uniform samplerCubeArray  pointLightDepthArray;
 
 
 #define LIGHT_COUNT 2
@@ -27,6 +27,31 @@ layout (location = 0) in vec2 inUV;
 layout (location = 0) out vec4 outFragColor;
 
 vec3 ao = vec3(0);
+
+float caculateShadowFactorOfpointlight(vec3 fragPos){
+
+	float bias = 0.05; 
+	float samples = 4.0;
+	float offset = 0.1;
+
+	float factor;
+	for(int i=0; i<LIGHT_COUNT;++i){
+		vec3 lightDir = ubo.pointLights[i].position - fragPos;
+		float TrueDistance = length(lightDir);
+		vec3 sampleDir = normalize(lightDir);
+		for(float x = -offset; x <=offset; x += offset/samples){
+			for(float y = -offset; y <=offset; y += offset/samples){
+				vec3 sam = normalize(sampleDir + vec3(x,y,0));
+				float sampleDistance = texture(pointLightDepthArray,vec4(sam,1)).r;
+
+				factor += TrueDistance > sampleDistance + bias ? 1.0 : 0.0;
+			}
+		}
+	}
+
+	return factor/samples/samples;
+}
+
 
 // compute shading in world space
 void main() 
@@ -78,6 +103,7 @@ void main()
 		fragcolor += vec3((diff + spec) ) * ubo.pointLights[i].intensity.rgb * albedo.rgb;
 	}    	
 
+	fragcolor *= caculateShadowFactorOfpointlight(fragPos);
 
 	// hdr transform
 	vec3 outhdrColor = fragcolor/(fragcolor+1);

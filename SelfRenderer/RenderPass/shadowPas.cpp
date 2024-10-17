@@ -6,12 +6,12 @@ void ShadowPass::prepare()
     initLights();
 
     //pipeline
-    VkPipelineLayoutCreateInfo PipelineLayoutCreateInfo = vks::initializers::pipelineLayoutCreateInfo();
+    VkPipelineLayoutCreateInfo PipelineLayoutCreateInfo = vks::initializers::pipelineLayoutCreateInfo(nullptr,0);
 
     VkPushConstantRange pushConstantRange{};
     pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
     pushConstantRange.offset = 0;
-    pushConstantRange.size = sizeof(glm::mat4);
+    pushConstantRange.size = 2*sizeof(glm::mat4);
 
     PipelineLayoutCreateInfo.pushConstantRangeCount = 1;
     PipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantRange;
@@ -31,10 +31,10 @@ void ShadowPass::prepare()
 	};
 	VkPipelineDynamicStateCreateInfo dynamicSate = vks::initializers::pipelineDynamicStateCreateInfo(dynamicStates.data(), 2);
 	std::array<VkPipelineShaderStageCreateInfo, 1> shaderStages;
-	shaderStages[0] = exampleBase->loadShader(getShaderPath() + "shadowOfpointLight/PointLightShadowVs.spv", VK_SHADER_STAGE_VERTEX_BIT);
+	shaderStages[0] = exampleBase->loadShader(getShaderPath() + "shadowOfpointLight/PointLightShadow.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
 
 
-	VkGraphicsPipelineCreateInfo pipelineCreateInfo = vks::initializers::pipelineCreateInfo(PipelineLayout, FrameBuffer->renderPass, 0);
+	VkGraphicsPipelineCreateInfo pipelineCreateInfo = vks::initializers::pipelineCreateInfo(PipelineLayout, pointLights[0].framebuffer[0]->renderPass, 0);
 	pipelineCreateInfo.pInputAssemblyState = &inputAssemblyState;
 	pipelineCreateInfo.pVertexInputState = vertexInputState;
 	pipelineCreateInfo.pRasterizationState = &rasterState;
@@ -63,38 +63,61 @@ void ShadowPass::draw()
 	    for(int j =0; j<6; ++j)
 	    {
             VkRenderPassBeginInfo renderPassBeginInfo = vks::initializers::renderPassBeginInfo();
-            renderPassBeginInfo.renderPass = pointLights[i].framebuffer[j].renderPass;
-            renderPassBeginInfo.framebuffer = pointLights[i].framebuffer[j].framebuffer;
-            renderPassBeginInfo.renderArea.extent.width = pointLights[i].framebuffer[j].width;
-            renderPassBeginInfo.renderArea.extent.height = pointLights[i].framebuffer[j].height;
+            renderPassBeginInfo.renderPass = pointLights[i].framebuffer[j]->renderPass;
+            renderPassBeginInfo.framebuffer = pointLights[i].framebuffer[j]->framebuffer;
+            renderPassBeginInfo.renderArea.extent.width = depthsWidth;
+            renderPassBeginInfo.renderArea.extent.height = depthsHeight;
             renderPassBeginInfo.clearValueCount = static_cast<uint32_t>(clearValue.size());
             renderPassBeginInfo.pClearValues = clearValue.data();
 
             vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo,VK_SUBPASS_CONTENTS_INLINE);
 
-            VkViewport viewport = vks::initializers::viewport((float)FrameBuffer->width, (float)FrameBuffer->height, 0.0f, 1.0f);
+            VkViewport viewport = vks::initializers::viewport((float)depthsWidth, (float)depthsHeight, 0.0f, 1.0f);
             vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
-            VkRect2D scissor = vks::initializers::rect2D(FrameBuffer->width, FrameBuffer->height, 0, 0);
+            VkRect2D scissor = vks::initializers::rect2D(depthsWidth, depthsHeight, 0, 0);
             vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Pipeline);
 
-            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, PipelineLayout, 0, 1, &DescriptorSet, 0, nullptr);
-            vkCmdPushConstants(commandBuffer, PipelineLayout, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT, 0, sizeof(glm::mat4), &pointLights[i].view[j]);
+            vkCmdPushConstants(commandBuffer, PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &pointLights[i].model);
+
+	    	vkCmdPushConstants(commandBuffer, PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, sizeof(glm::mat4), sizeof(glm::mat4), &pointLights[i].view[j]);
             gPass->scene->draw(commandBuffer);
-            vkCmdEndRenderPass(commandBuffer);
+
+            // //in subpassDependency has done this action
+            //VkImageMemoryBarrier imageBarrier = vks::initializers::imageMemoryBarrier();
+            //imageBarrier.oldLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+            //imageBarrier.newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+            //imageBarrier.image = pointLights[i].framebuffer[j]->attachments[0].image;
+            //imageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+            //imageBarrier.subresourceRange.baseArrayLayer = 0;
+            //imageBarrier.subresourceRange.layerCount = 1;
+            //imageBarrier.subresourceRange.baseMipLevel = 0;
+            //imageBarrier.subresourceRange.levelCount = 1;
+
+            //imageBarrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+            //imageBarrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+            //vkCmdPipelineBarrier(
+            //    commandBuffer, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT , VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+            //    VK_DEPENDENCY_BY_REGION_BIT, 0, nullptr, 0, nullptr,
+            //    1, &imageBarrier
+            //);
+	    	vkCmdEndRenderPass(commandBuffer);
 	    }
     }
 
+    vkEndCommandBuffer(commandBuffer);
 }
 
-void ShadowPass::update()
+void ShadowPass::update(VkQueue& queue)
 {
+
 }
 
 void ShadowPass::createRenderpass()
 {
+
 }
 
 void ShadowPass::initLights()
@@ -102,29 +125,37 @@ void ShadowPass::initLights()
     // projection matrix
     glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), 1.0f, nearPlane, farPlane);
 
+    pointLights.resize(LightCount);
     for (int i = 0; i < LightCount; ++i)
     {
+        auto& tmp = pointLights[i];
+
         PointLight light;
         light.position = { randomFloat(-3,3),randomFloat(-3,0),randomFloat(-12,1) };
         light.intensity = glm::vec3(randomFloat(0, 1));
 
-        pointLights[i].Light = light;
+        tmp.model = glm::translate(glm::mat4(1.0f), -light.position);
+        tmp.Light = light;
         for(int j=0; j<6; ++j)
         {
-            pointLights[i].view[j] = shadowProj * glm::lookAt(light.position, light.position + directions[j], upVectors[j]);
-            pointLights[i].framebuffer[j] = initShadowFramebuffer();
+            tmp.framebuffer[j] = new vks::Framebuffer(exampleBase->vulkanDevice);
+            tmp.view[j] = shadowProj * glm::lookAt(light.position, light.position + directions[j], upVectors[j]);
+            initShadowFramebuffer(tmp.framebuffer[j]);
         }
     }
 }
 
-vks::Framebuffer ShadowPass::initShadowFramebuffer()
+void ShadowPass::initShadowFramebuffer(vks::Framebuffer* framebuffer)
 {
-	auto framebuffer  = new vks::Framebuffer(Device);
+    framebuffer->width = depthsWidth;
+    framebuffer->height = depthsHeight;
+
+    // 
     vks::AttachmentCreateInfo attachmentInfo = {};
-    attachmentInfo.width = exampleBase->width;
-    attachmentInfo.height = exampleBase->height;
+    attachmentInfo.width = depthsWidth;
+    attachmentInfo.height = depthsHeight;
     attachmentInfo.layerCount = 1;
-    attachmentInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+    attachmentInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
     VkFormat attDepthFormat;
     VkBool32 validDepthFormat = vks::tools::getSupportedDepthFormat(Device->physicalDevice, &attDepthFormat);
     assert(validDepthFormat);
@@ -133,5 +164,5 @@ vks::Framebuffer ShadowPass::initShadowFramebuffer()
     framebuffer->addAttachment(attachmentInfo);
     framebuffer->createSampler(VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
     framebuffer->createRenderPass(true);
-    return *framebuffer;
+
 }

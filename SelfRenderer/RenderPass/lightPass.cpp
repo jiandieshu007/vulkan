@@ -3,9 +3,10 @@
 void LightPass::prepare()
 {
     prepareLight();
+
     std::vector<VkDescriptorPoolSize> poolSizes = {
         vks::initializers::descriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,1),
-		vks::initializers::descriptorPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4)
+		vks::initializers::descriptorPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 3+1)
     };
     auto PoolCreateInfo = vks::initializers::descriptorPoolCreateInfo(poolSizes, 1);
     VK_CHECK_RESULT(vkCreateDescriptorPool(Device->logicalDevice, &PoolCreateInfo, nullptr, &DescriptorPool));
@@ -24,6 +25,7 @@ void LightPass::prepare()
     VK_CHECK_RESULT(vkAllocateDescriptorSets(Device->logicalDevice, &descriptorSetAlloc, &DescriptorSet));
 
     auto sampler = geometryPass->FrameBuffer->sampler;
+    auto depthSampler = shadowPass->pointLights[0].framebuffer[0]->sampler;
     std::vector<VkWriteDescriptorSet> WriteSet{
         vks::initializers::writeDescriptorSet(DescriptorSet,VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,0,
             &vks::initializers::descriptorImageInfo(sampler,geometryPass->FrameBuffer->attachments[0].view,VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)),
@@ -32,7 +34,8 @@ void LightPass::prepare()
         vks::initializers::writeDescriptorSet(DescriptorSet,VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,2,
             &vks::initializers::descriptorImageInfo(sampler,geometryPass->FrameBuffer->attachments[2].view,VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)),
         vks::initializers::writeDescriptorSet(DescriptorSet,VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,3,
-            &vks::initializers::descriptorImageInfo(sampler,geometryPass->FrameBuffer->attachments[3].view,VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)),
+            &vks::initializers::descriptorImageInfo(depthSampler,DepthsCubeArray.view,VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)),
+
         vks::initializers::writeDescriptorSet(DescriptorSet,VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,4, &lightBuffer.descriptor)
     };
     vkUpdateDescriptorSets(Device->logicalDevice, WriteSet.size(), WriteSet.data(), 0, nullptr);
@@ -81,9 +84,9 @@ void LightPass::prepare()
     VK_CHECK_RESULT(vkCreateGraphicsPipelines(Device->logicalDevice, nullptr, 1, &pipelineCreateInfo, nullptr, &Pipeline));
 }
 
-void LightPass::update()
+void LightPass::update(VkQueue& queue)
 {
-    updateLight();
+    updatePointLightDepthsimage(queue, shadowPass->pointLights, &DepthsCubeArray);
 }
 
 void LightPass::draw()
@@ -93,6 +96,32 @@ void LightPass::draw()
         VkCommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
 
         VK_CHECK_RESULT(vkBeginCommandBuffer(exampleBase->drawCmdBuffers[i], &cmdBufInfo));
+
+        for (uint32_t i = 0; i < LightCount; ++i)
+        {
+            for (int j = 0; j < 6; ++j) {
+                VkImageCopy copyRegion{};
+                copyRegion.srcSubresource.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+                copyRegion.srcSubresource.mipLevel = 0;
+                copyRegion.srcSubresource.baseArrayLayer = 0;
+                copyRegion.srcSubresource.layerCount = 1;
+                copyRegion.srcOffset = { 0,0,0 };
+
+                copyRegion.dstSubresource.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+                copyRegion.dstSubresource.mipLevel = 0;
+                copyRegion.dstSubresource.baseArrayLayer = i * 6 + j;
+                copyRegion.dstSubresource.layerCount = 1;
+                copyRegion.dstOffset = { 0,0,0 };
+
+                copyRegion.extent.width = shadowPass->depthsWidth;
+                copyRegion.extent.height = shadowPass->depthsHeight;
+                copyRegion.extent.depth = 1;
+
+                vkCmdCopyImage(exampleBase->drawCmdBuffers[i], shadowPass->pointLights[i].framebuffer[j]->attachments[0].image, VK_IMAGE_LAYOUT_GENERAL,
+                    DepthsCubeArray.image, VK_IMAGE_LAYOUT_GENERAL, 1, &copyRegion);
+            }
+        }
+
         std::vector<VkClearValue> clearValues(2);
         clearValues[0].color = exampleBase->defaultClearColor;
         clearValues[1].depthStencil = { 1.0f, 0 };
@@ -105,7 +134,10 @@ void LightPass::draw()
         renderPassBeginInfo.clearValueCount = 2;
         renderPassBeginInfo.pClearValues = clearValues.data();
 
+
+
         vkCmdBeginRenderPass(exampleBase->drawCmdBuffers[i], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
 
         VkViewport viewport = vks::initializers::viewport((float)exampleBase->width, (float)exampleBase->height, 0.0f, 1.0f);
         vkCmdSetViewport(exampleBase->drawCmdBuffers[i], 0, 1, &viewport);
@@ -122,7 +154,7 @@ void LightPass::draw()
 
         vkCmdDraw(exampleBase->drawCmdBuffers[i], 3, 1, 0, 0);
 
-        exampleBase->drawUI(exampleBase->drawCmdBuffers[i]);
+
 
         vkCmdEndRenderPass(exampleBase->drawCmdBuffers[i]);
 
@@ -132,22 +164,23 @@ void LightPass::draw()
 
 void LightPass::createRenderpass()
 {
+
 }
 
 void LightPass::prepareLight()
 {
+
+    createPointLightDepthsimage(shadowPass->pointLights[0], &DepthsCubeArray);
+
+
     for(int i=0; i<LightCount; ++i)
     {
-        PointLight light;
-        light.position = {randomFloat(-3,3),randomFloat(-3,0),randomFloat(-12,1)};
-        light.intensity = glm::vec3(randomFloat(0,1));
-        pointLights.push_back(light);
+        pointLights.push_back(shadowPass->pointLights[i].Light);
     }
     Device->createBuffer(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &lightBuffer, sizeof(PointLight) * LightCount);
     lightBuffer.map();
     lightBuffer.copyTo(pointLights.data(), sizeof(PointLight) * LightCount);
     lightBuffer.unmap();
-	updateLight();
 }
 
 void LightPass::updateLight()

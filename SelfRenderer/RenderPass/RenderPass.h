@@ -1,12 +1,14 @@
 #pragma once
 
+#include <queue>
+
 #include "VulkanFrameBuffer.hpp"
 #include "VulkanglTFModel.h"
 
 #include "vulkan/vulkan_hpp_macros.hpp"
 
 #include "vulkanexamplebase.h"
-#include "../../base/VulkanBuffer.h"
+
 
 const std::string shaderDir = "shader/";
 
@@ -22,7 +24,7 @@ struct UBO {
 	glm::mat4 projection;
 	glm::mat4 model;
 	glm::mat4 view;
-} uboMvp;
+};
 
 inline float randomFloat(float min, float max) {
 	std::random_device rd;
@@ -31,8 +33,10 @@ inline float randomFloat(float min, float max) {
 	return static_cast<float>(dis(gen));
 }
 
+
 class RenderPass {
 public:
+
 	RenderPass(VulkanExampleBase* example) : exampleBase(example), Device(exampleBase->vulkanDevice)
 	{
 		
@@ -62,7 +66,7 @@ public:
 
 	virtual void prepare() = 0;
 	virtual void draw() = 0;
-	virtual void update() = 0;
+	virtual void update(VkQueue& queue) = 0;
 	virtual void createRenderpass() = 0;
 	void loadScene(const std::string& path, VkQueue& queue) {
 		vkglTF::descriptorBindingFlags = vkglTF::DescriptorBindingFlags::ImageBaseColor;

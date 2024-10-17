@@ -1,3 +1,5 @@
+#pragma once
+
 #include"RenderPass.h"
 #include "Geometry.h"
 
@@ -31,22 +33,28 @@ const glm::vec3 upVectors[6] = {
 struct pointLightsWithFramebuffer
 {
     PointLight Light;
+    glm::mat4 model;
     glm::mat4 view[6];
-    vks::Framebuffer framebuffer[6];
+    vks::Framebuffer* framebuffer[6] ;
 };
 
 class ShadowPass : public RenderPass {
 public:
     ShadowPass(VulkanExampleBase* example, GeometryPass* pass) : RenderPass(example), gPass(pass) {}
-
+    ~ShadowPass()
+    {
+        lightBuffer.destroy();
+    }
     virtual void prepare() override;
     virtual void draw() override;
-    virtual void update() override;
+    virtual void update(VkQueue& queue) override;
     virtual void createRenderpass() override;
-    std::array<pointLightsWithFramebuffer, LightCount> pointLights{};
 
+    std::vector<pointLightsWithFramebuffer> pointLights;
+    const int depthsWidth = 1024;
+    const int depthsHeight = 1024;
     void initLights();
-    vks::Framebuffer initShadowFramebuffer();
+    void ShadowPass::initShadowFramebuffer(vks::Framebuffer* framebuffer);
     GeometryPass* gPass;
     vks::Buffer lightBuffer;
     VkCommandBuffer commandBuffer;

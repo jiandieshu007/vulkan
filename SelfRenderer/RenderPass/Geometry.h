@@ -14,11 +14,9 @@ public:
 	}
 	virtual void prepare() override;
 	virtual void draw() override;
-	virtual void update() override;
+	virtual void update(VkQueue& queue) override;
 	virtual void createRenderpass() override;
-	
-
-
+	UBO uboMvp;
 	vks::Buffer uboBuffer;
 	VkSemaphore geometey;
 	VkCommandBuffer commandBuffer;
