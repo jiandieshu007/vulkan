@@ -6,7 +6,7 @@ layout (binding = 2) uniform sampler2D samplerAlbedo;
 layout (binding = 3) uniform samplerCubeArray  pointLightDepthArray;
 
 
-#define LIGHT_COUNT 2
+#define LIGHT_COUNT 1
 #define AMBIENT_LIGHT 0.1
 
 struct pointLight{
@@ -26,30 +26,44 @@ layout (push_constant) uniform PushConstants {
 layout (location = 0) in vec2 inUV;
 layout (location = 0) out vec4 outFragColor;
 
-vec3 ao = vec3(0);
+#define ambient 0.1
 
-float caculateShadowFactorOfpointlight(vec3 fragPos){
-
-	float bias = 0.05; 
-	float samples = 4.0;
-	float offset = 0.1;
-
-	float factor;
+float textureProj(vec3 shadowCoord, vec3 off)
+{
+	float shadow = 0;
 	for(int i=0; i<LIGHT_COUNT;++i){
-		vec3 lightDir = ubo.pointLights[i].position - fragPos;
-		float TrueDistance = length(lightDir);
-		vec3 sampleDir = normalize(lightDir);
-		for(float x = -offset; x <=offset; x += offset/samples){
-			for(float y = -offset; y <=offset; y += offset/samples){
-				vec3 sam = normalize(sampleDir + vec3(x,y,0));
-				float sampleDistance = texture(pointLightDepthArray,vec4(sam,1)).r;
+		vec3 lightdir = ubo.pointLights[i].position -shadowCoord;
+		float lenDir = length(lightdir);
+		float sam = texture(pointLightDepthArray,vec4(normalize(lightdir+off),i)).r;
+		shadow += lenDir > sam ? 1 : ambient;
+	}
+	return shadow;
+}
 
-				factor += TrueDistance > sampleDistance + bias ? 1.0 : 0.0;
+float filterPCF(vec3 sc)
+{
+	ivec3 texDim = textureSize(pointLightDepthArray, 0);
+	float scale = 1.5;
+	float dx = scale * 1.0 / float(texDim.x);
+	float dy = scale * 1.0 / float(texDim.y);
+	float dz = scale * 1.0 / float(texDim.z);
+
+	float shadowFactor = 0.0;
+	int count = 0;
+	int range = 1;
+	
+	for (int x = -range; x <= range; x++)
+	{
+		for (int y = -range; y <= range; y++)
+		{
+			for(int z = -range; z<range; z++){
+				shadowFactor += textureProj(sc, vec3(dx*x, dy*y, dz*z));
+				count+= LIGHT_COUNT;
 			}
 		}
+	
 	}
-
-	return factor/samples/samples;
+	return shadowFactor / count;
 }
 
 
@@ -103,7 +117,7 @@ void main()
 		fragcolor += vec3((diff + spec) ) * ubo.pointLights[i].intensity.rgb * albedo.rgb;
 	}    	
 
-	fragcolor *= caculateShadowFactorOfpointlight(fragPos);
+	fragcolor *= filterPCF(fragPos);
 
 	// hdr transform
 	vec3 outhdrColor = fragcolor/(fragcolor+1);

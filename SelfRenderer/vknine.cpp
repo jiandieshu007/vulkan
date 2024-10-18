@@ -24,6 +24,7 @@ public:
     ~VulkanExample()
     {
         gPass->~GeometryPass();
+        shadowPass->~ShadowPass();
         lightPass->~LightPass();
         vkDestroyFence(device, fenceforQueue, nullptr);
     }
@@ -46,6 +47,7 @@ public:
 
         std::vector<VkCommandBuffer> cmds;
         cmds.push_back(gPass->commandBuffer);
+        cmds.push_back(shadowPass->commandBuffer);
         cmds.push_back(drawCmdBuffers[currentBuffer]);
 
         submitInfo.commandBufferCount = cmds.size();

@@ -18,6 +18,8 @@ public:
 	~LightPass()
 	{
 		lightBuffer.destroy();
+		vkDestroyImageView(Device->logicalDevice, DepthsCubeArray.view, nullptr);
+		vkDestroyImage(Device->logicalDevice, DepthsCubeArray.image, nullptr);
 	}
 	virtual void prepare() override;
 	virtual void update(VkQueue& queue) override;
@@ -59,9 +61,9 @@ public:
 		VkImageViewCreateInfo viewInfo = {};
 		viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		viewInfo.image = texture->image;
-		viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+		viewInfo.viewType = VK_IMAGE_VIEW_TYPE_CUBE_ARRAY;
 		viewInfo.format = texture->format;
-		viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+		viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT ;
 		viewInfo.subresourceRange.baseMipLevel = 0;
 		viewInfo.subresourceRange.levelCount = 1;
 		viewInfo.subresourceRange.baseArrayLayer = 0;

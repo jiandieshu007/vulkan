@@ -97,7 +97,42 @@ void LightPass::draw()
 
         VK_CHECK_RESULT(vkBeginCommandBuffer(exampleBase->drawCmdBuffers[i], &cmdBufInfo));
 
-        for (uint32_t i = 0; i < LightCount; ++i)
+
+
+        // srcImage is VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL
+
+    	// dstImage is VK_IMAGE_LAYOUT_UNDEFINED
+
+        // so insert a barrier
+
+        VkImageMemoryBarrier imageMemoryBarrier = {};
+        imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+        imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;  
+        imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        imageMemoryBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        imageMemoryBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        imageMemoryBarrier.image = DepthsCubeArray.image;          
+        imageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+        imageMemoryBarrier.subresourceRange.baseMipLevel = 0;
+        imageMemoryBarrier.subresourceRange.levelCount = 1;
+        imageMemoryBarrier.subresourceRange.baseArrayLayer = 0;
+        imageMemoryBarrier.subresourceRange.layerCount = 6 * LightCount;
+
+        imageMemoryBarrier.srcAccessMask = VK_ACCESS_NONE; 
+        imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;  
+        
+        vkCmdPipelineBarrier(
+            exampleBase->drawCmdBuffers[i],
+            VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,   
+            VK_PIPELINE_STAGE_TRANSFER_BIT,      
+            0,
+            0, nullptr,
+            0, nullptr,
+            1, &imageMemoryBarrier);
+
+
+
+        for (uint32_t k = 0; k < LightCount; ++k)
         {
             for (int j = 0; j < 6; ++j) {
                 VkImageCopy copyRegion{};
@@ -109,7 +144,7 @@ void LightPass::draw()
 
                 copyRegion.dstSubresource.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
                 copyRegion.dstSubresource.mipLevel = 0;
-                copyRegion.dstSubresource.baseArrayLayer = i * 6 + j;
+                copyRegion.dstSubresource.baseArrayLayer = k* 6 + j;
                 copyRegion.dstSubresource.layerCount = 1;
                 copyRegion.dstOffset = { 0,0,0 };
 
@@ -117,10 +152,25 @@ void LightPass::draw()
                 copyRegion.extent.height = shadowPass->depthsHeight;
                 copyRegion.extent.depth = 1;
 
-                vkCmdCopyImage(exampleBase->drawCmdBuffers[i], shadowPass->pointLights[i].framebuffer[j]->attachments[0].image, VK_IMAGE_LAYOUT_GENERAL,
-                    DepthsCubeArray.image, VK_IMAGE_LAYOUT_GENERAL, 1, &copyRegion);
+                vkCmdCopyImage(exampleBase->drawCmdBuffers[i], shadowPass->pointLights[k].framebuffer[j]->attachments[0].image, VK_IMAGE_LAYOUT_GENERAL,
+                    DepthsCubeArray.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
             }
         }
+
+        imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+        imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        imageMemoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+        vkCmdPipelineBarrier(
+            exampleBase->drawCmdBuffers[i],
+            VK_PIPELINE_STAGE_TRANSFER_BIT,
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            0,
+            0, nullptr,
+            0, nullptr,
+            1, &imageMemoryBarrier);
 
         std::vector<VkClearValue> clearValues(2);
         clearValues[0].color = exampleBase->defaultClearColor;

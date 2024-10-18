@@ -85,24 +85,6 @@ void ShadowPass::draw()
 	    	vkCmdPushConstants(commandBuffer, PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, sizeof(glm::mat4), sizeof(glm::mat4), &pointLights[i].view[j]);
             gPass->scene->draw(commandBuffer);
 
-            // //in subpassDependency has done this action
-            //VkImageMemoryBarrier imageBarrier = vks::initializers::imageMemoryBarrier();
-            //imageBarrier.oldLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-            //imageBarrier.newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-            //imageBarrier.image = pointLights[i].framebuffer[j]->attachments[0].image;
-            //imageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
-            //imageBarrier.subresourceRange.baseArrayLayer = 0;
-            //imageBarrier.subresourceRange.layerCount = 1;
-            //imageBarrier.subresourceRange.baseMipLevel = 0;
-            //imageBarrier.subresourceRange.levelCount = 1;
-
-            //imageBarrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-            //imageBarrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-            //vkCmdPipelineBarrier(
-            //    commandBuffer, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT , VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-            //    VK_DEPENDENCY_BY_REGION_BIT, 0, nullptr, 0, nullptr,
-            //    1, &imageBarrier
-            //);
 	    	vkCmdEndRenderPass(commandBuffer);
 	    }
     }
@@ -125,14 +107,15 @@ void ShadowPass::initLights()
     // projection matrix
     glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), 1.0f, nearPlane, farPlane);
 
+    std::vector<glm::vec3> poss{ glm::vec3(5,-3,0), glm::vec3(10,0,-3)};
     pointLights.resize(LightCount);
     for (int i = 0; i < LightCount; ++i)
     {
         auto& tmp = pointLights[i];
 
         PointLight light;
-        light.position = { randomFloat(-3,3),randomFloat(-3,0),randomFloat(-12,1) };
-        light.intensity = glm::vec3(randomFloat(0, 1));
+        light.position = poss[i];
+        light.intensity = glm::vec3(0.5);
 
         tmp.model = glm::translate(glm::mat4(1.0f), -light.position);
         tmp.Light = light;
@@ -155,7 +138,7 @@ void ShadowPass::initShadowFramebuffer(vks::Framebuffer* framebuffer)
     attachmentInfo.width = depthsWidth;
     attachmentInfo.height = depthsHeight;
     attachmentInfo.layerCount = 1;
-    attachmentInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+    attachmentInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
     VkFormat attDepthFormat;
     VkBool32 validDepthFormat = vks::tools::getSupportedDepthFormat(Device->physicalDevice, &attDepthFormat);
     assert(validDepthFormat);

@@ -32,6 +32,13 @@ const glm::vec3 upVectors[6] = {
 
 struct pointLightsWithFramebuffer
 {
+    ~pointLightsWithFramebuffer()
+    {
+	    for(int i=0; i<6;++i)
+	    {
+            framebuffer[i]->~Framebuffer();
+	    }
+    }
     PointLight Light;
     glm::mat4 model;
     glm::mat4 view[6];
@@ -42,7 +49,7 @@ class ShadowPass : public RenderPass {
 public:
     ShadowPass(VulkanExampleBase* example, GeometryPass* pass) : RenderPass(example), gPass(pass) {}
     ~ShadowPass()
-    {
+    { 
         lightBuffer.destroy();
     }
     virtual void prepare() override;
@@ -55,6 +62,7 @@ public:
     const int depthsHeight = 1024;
     void initLights();
     void ShadowPass::initShadowFramebuffer(vks::Framebuffer* framebuffer);
+
     GeometryPass* gPass;
     vks::Buffer lightBuffer;
     VkCommandBuffer commandBuffer;

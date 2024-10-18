@@ -13,7 +13,7 @@
 const std::string shaderDir = "shader/";
 
 
-constexpr int LightCount = 2;
+constexpr int LightCount = 1;
 
 struct PointLight {
 	alignas(16) glm::vec3 position;
