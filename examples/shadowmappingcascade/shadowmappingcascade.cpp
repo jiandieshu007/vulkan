@@ -652,8 +652,8 @@ public:
 		// Calculate split depths based on view camera frustum
 		// Based on method presented in https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch10.html
 		for (uint32_t i = 0; i < SHADOW_MAP_CASCADE_COUNT; i++) {
-			float p = (i + 1) / static_cast<float>(SHADOW_MAP_CASCADE_COUNT);
-			float log = minZ * std::pow(ratio, p);
+			float p = (i + 1) / static_cast<float>(SHADOW_MAP_CASCADE_COUNT); // µ¥¸ö±ÈÀý
+			float log = minZ * std::pow(ratio, p);  // 
 			float uniform = minZ + range * p;
 			float d = cascadeSplitLambda * (log - uniform) + uniform;
 			cascadeSplits[i] = (d - minZ) / clipRange;

@@ -30,6 +30,7 @@ const glm::vec3 upVectors[6] = {
     glm::vec3(0.0f, -1.0f,  0.0f)   // -Z
 };
 
+
 struct pointLightsWithFramebuffer
 {
     ~pointLightsWithFramebuffer()
